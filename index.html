@@ -144,9 +144,7 @@
                         <option value="all">جميع المراحل</option>
                     </select>
                 </div>
-                <div class="standings-scroll-wrapper">
-                    <div id="standings-container"></div>
-                </div>
+                <div id="standings-container" class="standings-scroll-wrapper"></div>
             </div>
             
             <!-- Statistics Tab -->
@@ -178,18 +176,42 @@
             <div id="team-header-container"></div>
             <div id="team-info-container"></div>
             
-            <!-- Team Statistics Section -->
-            <div class="team-stats-section">
-                <h3 class="section-title">إحصائيات الفريق</h3>
-                <div class="stats-tabs">
-                    <button class="stats-btn active" onclick="showTeamStats('scorers')">الهدافون</button>
-                    <button class="stats-btn" onclick="showTeamStats('assists')">صناعة الأهداف</button>
+            <!-- Team Matches Section -->
+            <div class="collapsible-section">
+                <div class="collapsible-header" onclick="toggleSection('team-matches-section')">
+                    <h3>⚽ مباريات الفريق</h3>
+                    <span class="toggle-icon">▼</span>
                 </div>
-                <div id="team-stats-container"></div>
+                <div id="team-matches-section" class="collapsible-content">
+                    <div id="team-matches-container"></div>
+                </div>
             </div>
             
-            <div id="team-players-container"></div>
-            <div id="team-matches-container"></div>
+            <!-- Team Statistics Section -->
+            <div class="collapsible-section">
+                <div class="collapsible-header" onclick="toggleSection('team-stats-section')">
+                    <h3>📊 إحصائيات الفريق</h3>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div id="team-stats-section" class="collapsible-content">
+                    <div class="stats-tabs">
+                        <button class="stats-btn active" onclick="showTeamStats('scorers')">الهدافون</button>
+                        <button class="stats-btn" onclick="showTeamStats('assists')">صناعة الأهداف</button>
+                    </div>
+                    <div id="team-stats-container"></div>
+                </div>
+            </div>
+            
+            <!-- Team Players Section -->
+            <div class="collapsible-section">
+                <div class="collapsible-header" onclick="toggleSection('team-players-section')">
+                    <h3>👥 الجهاز الفني واللاعبين</h3>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div id="team-players-section" class="collapsible-content">
+                    <div id="team-players-container"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Age Selection Modal -->
