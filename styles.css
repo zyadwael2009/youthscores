@@ -454,11 +454,30 @@ h3 {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
+.news-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: #f5f5f5;
+    min-height: 200px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.news-image-container:hover {
+    background: #e8e8e8;
+}
+
 .news-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
+    max-width: 100%;
+    max-height: 400px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     display: block;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
 }
 
 .news-content {
@@ -790,7 +809,78 @@ h3 {
     font-size: 1.2em;
 }
 
-/* Footer */
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    header h1 {
+        font-size: 1.8em;
+    }
+    
+    nav .container {
+        gap: 5px;
+    }
+    
+    .nav-btn {
+        padding: 10px 15px;
+        font-size: 0.9em;
+    }
+    
+    .competition-tabs {
+        gap: 5px;
+        padding: 15px 10px;
+    }
+    
+    .tab-btn {
+        padding: 10px 15px;
+        font-size: 0.85em;
+    }
+    
+    .matches-with-sidebar {
+        flex-direction: column;
+    }
+    
+    .matches-content {
+        width: 100%;
+    }
+    
+    .quick-links-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .news-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .venues-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+    
+    .modal-match-display {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .modal-details-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .standings-container {
+        margin: 0 -15px;
+        padding: 0 15px;
+    }
+    
+    .standings-table {
+        font-size: 0.85em;
+    }
+}
 footer {
     background: rgba(255, 255, 255, 0.95);
     text-align: center;
@@ -834,6 +924,7 @@ footer p {
     display: flex;
     gap: 20px;
     align-items: flex-start;
+    position: relative;
 }
 
 .season-selector {
@@ -844,6 +935,60 @@ footer p {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 20px;
+    transition: transform 0.3s ease;
+}
+
+.season-toggle-btn {
+    display: none;
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: #7e0000;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2em;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.season-toggle-btn:hover {
+    transform: scale(1.1);
+    background: #9e0000;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .competitions-layout {
+        flex-direction: column;
+    }
+    
+    .season-selector {
+        position: fixed;
+        top: 0;
+        right: -250px;
+        height: 100vh;
+        min-width: 250px;
+        z-index: 998;
+        border-radius: 0;
+        overflow-y: auto;
+        transform: translateX(0);
+    }
+    
+    .season-selector.active {
+        transform: translateX(-250px);
+    }
+    
+    .season-toggle-btn {
+        display: block;
+    }
+    
+    .competitions-content {
+        width: 100%;
+    }
 }
 
 .season-selector h3 {
@@ -935,6 +1080,57 @@ footer p {
     top: 20px;
     max-height: 80vh;
     overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+
+.weeks-toggle-btn {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    background: #7e0000;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2em;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.weeks-toggle-btn:hover {
+    transform: scale(1.1);
+    background: #9e0000;
+}
+
+@media (max-width: 768px) {
+    .weeks-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100vh;
+        min-width: 100%;
+        max-width: 100%;
+        z-index: 998;
+        border-radius: 0;
+        max-height: 100vh;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        padding: 60px 20px 20px;
+    }
+    
+    .weeks-sidebar.active {
+        transform: translateY(0);
+    }
+    
+    .weeks-toggle-btn {
+        display: block;
+    }
 }
 
 .weeks-sidebar h3 {
@@ -4141,4 +4337,26 @@ footer p {
     padding: 12px 15px;
     background: #f8f8f8;
     border-radius: 8px;
+}
+/* Standings Container - Mobile Horizontal Scroll */
+#standings-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+    #standings-container {
+        margin: 0 -15px;
+        padding: 0 15px;
+    }
+    
+    .standings-table table {
+        min-width: 600px;
+    }
+    
+    .standings-table th,
+    .standings-table td {
+        font-size: 0.85em;
+        padding: 10px 5px;
+    }
 }
