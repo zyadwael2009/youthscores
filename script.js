@@ -143,85 +143,120 @@ async function loadRandomMatchesForHome() {
         return;
     }
 
-    // TEMPORARY: Function to load test stage data
-    window.loadTestStageData = async function() {
-        const testUrl = 'https://raw.githubusercontent.com/zantac/FootballData/refs/heads/main/2005/A/A2005Data2.json';
-        const container = document.getElementById('competition-matches-container');
-        
+    // Get current day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const today = new Date().getDay();
+    
+    // Determine which age groups to load based on day
+    let targetAges = [];
+    let targetCompetition = null;
+    
+    switch(today) {
+        case 6: // Saturday
+            targetAges = ['2009', '2010'];
+            break;
+        case 5: // Friday
+            targetAges = ['2011'];
+            break;
+        case 1: // Monday
+            targetAges = ['2007', '2008'];
+            break;
+        case 0: // Sunday
+            targetAges = ['2005'];
+            break;
+        case 4: // Thursday
+            targetAges = ['2005'];
+            targetCompetition = 'دوري الجمهورية القسم الثاني ب';
+            break;
+        case 3: // Wednesday
+            targetAges = ['2007'];
+            targetCompetition = 'دوري الجمهورية القسم الثاني ب';
+            break;
+        case 2: // Tuesday
+            targetAges = ['2009'];
+            break;
+        default:
+            targetAges = [];
+    }
+
+    console.log(`Day: ${today}, Target ages: ${targetAges}, Target competition: ${targetCompetition}`);
+
+    // Filter URLs based on day
+    const matchingUrls = allUrls.filter(urlData => {
+        if (!targetAges.includes(urlData.age)) return false;
+        if (targetCompetition && urlData.competition !== targetCompetition) return false;
+        return true;
+    });
+
+    console.log(`Found ${matchingUrls.length} matching URLs for today`);
+
+    if (matchingUrls.length === 0) {
+        container.innerHTML = '<div class="no-data">لا توجد مباريات اليوم</div>';
+        return;
+    }
+
+    // Try to load matches from matching URLs
+    allMatches = [];
+    
+    for (const urlData of matchingUrls) {
         try {
-            container.innerHTML = '<div class="loading"><div class="loader"></div><p>جاري تحميل بيانات الاختبار...</p></div>';
+            console.log(`Loading from: ${urlData.url}`);
+            const response = await fetch(urlData.url);
             
-            const response = await fetch(testUrl);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                console.log(`Failed to load ${urlData.url}`);
+                continue;
+            }
             
             const data = await response.json();
-            allMatches = data.matches.map(match => {
-                match.teams = data.teams;
-                return match;
-            });
             
-            console.log('Test data loaded:', allMatches.length, 'matches');
-            console.log('Sample match with stage:', allMatches.find(m => m.stage));
-            console.log('All unique stages:', [...new Set(allMatches.map(m => m.stage).filter(Boolean))]);
-            
-            // Show competition page
-            document.getElementById('competition-title').textContent = 'بطولة اختبار المراحل - A2005Data2';
-            resetCompetitionTabs();
-            showPage('competition-matches');
-            
-            // Display matches
-            displayMatchesByWeeks(allMatches);
-            
-            alert('✅ تم تحميل بيانات الاختبار بنجاح!\nانتقل إلى تبويب "الجدول" لاختبار فلتر المراحل');
-        } catch (error) {
-            console.error('Error loading test data:', error);
-            container.innerHTML = '<div class="no-data">فشل تحميل بيانات الاختبار</div>';
-            alert('❌ فشل تحميل بيانات الاختبار: ' + error.message);
-        }
-    };
-
-    // Pick one random URL
-    const randomIndex = Math.floor(Math.random() * allUrls.length);
-    const selected = allUrls[randomIndex];
-    
-    console.log(`Selected: ${selected.competition} - ${selected.age} - ${selected.season}`);
-    console.log(`URL: ${selected.url}`);
-
-    try {
-        const response = await fetch(selected.url);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('Match data loaded:', data);
-        
-        if (data.matches && data.matches.length > 0) {
-            // Debug: Log first match structure
-            console.log('First match structure:', data.matches[0]);
-            console.log('Match keys:', Object.keys(data.matches[0]));
-            
-            data.matches.forEach(match => {
-                allMatches.push({
-                    ...match,
-                    competition: selected.competition,
-                    age: selected.age,
-                    season: selected.season,
-                    teams: data.teams
+            if (data.matches && Array.isArray(data.matches)) {
+                // Add competition/age info to each match
+                data.matches.forEach(match => {
+                    match.competition = urlData.competition;
+                    match.age = urlData.age;
+                    match.season = urlData.season;
+                    match.teams = data.teams;
                 });
-            });
+                
+                allMatches.push(...data.matches);
+                console.log(`Loaded ${data.matches.length} matches from ${urlData.age}`);
+            }
             
-            console.log(`Loaded ${allMatches.length} matches from ${selected.competition}`);
-            displayTodayMatches();
-        } else {
-            console.error('No matches found in data');
-            container.innerHTML = '<div class="no-data">لا توجد مباريات في هذه البطولة</div>';
+            // Stop loading if we have enough matches
+            if (allMatches.length >= 4) {
+                break;
+            }
+        } catch (error) {
+            console.error(`Error loading ${urlData.url}:`, error);
         }
-    } catch (error) {
-        console.error('Error loading matches:', error);
-        container.innerHTML = '<div class="no-data">فشل تحميل المباريات. يرجى المحاولة لاحقاً.</div>';
     }
+    
+    if (allMatches.length === 0) {
+        container.innerHTML = '<div class="no-data">لا توجد مباريات اليوم</div>';
+        return;
+    }
+    
+    // Filter matches to only show those scheduled for today
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    
+    const todayMatches = allMatches.filter(match => {
+        if (!match.date) return false;
+        const matchDate = new Date(match.date);
+        matchDate.setHours(0, 0, 0, 0);
+        return matchDate.getTime() === todayDate.getTime();
+    });
+    
+    if (todayMatches.length === 0) {
+        container.innerHTML = '<div class="no-data">لا توجد مباريات اليوم</div>';
+        return;
+    }
+    
+    // Update allMatches with filtered results
+    allMatches = todayMatches;
+    
+    console.log(`Total matches for today: ${allMatches.length}`);
+    displayTodayMatches();
 }
 
 // Display matches on home page (just show first 4 from loaded matches)
@@ -779,22 +814,85 @@ function displayNews() {
         const card = document.createElement('div');
         card.className = 'news-card';
         
-        let imageHTML = '';
+        let contentHTML = '';
+        
+        // Only add image if it exists and is not null/empty
         if (newsItem.image && newsItem.image.trim() !== '') {
-            imageHTML = `<img src="${newsItem.image}" class="news-image" alt="${newsItem.title}">`;
+            contentHTML += `
+                <div class="news-image-container" onclick="openImageModal('${newsItem.image}')">
+                    <img src="${newsItem.image}" class="news-image" alt="${newsItem.title || 'خبر'}">
+                </div>
+            `;
         }
         
-        card.innerHTML = `
-            ${imageHTML}
-            <div class="news-content">
-                <div class="news-date">📅 ${formatArabicDate(new Date(newsItem.date))}</div>
-                <h3 class="news-title">${newsItem.title}</h3>
-                <div class="news-details">${newsItem.details}</div>
-            </div>
-        `;
+        contentHTML += '<div class="news-content">';
         
+        // Only add date if it exists
+        if (newsItem.date) {
+            contentHTML += `<div class="news-date">📅 ${formatArabicDate(new Date(newsItem.date))}</div>`;
+        }
+        
+        // Only add title if it exists
+        if (newsItem.title) {
+            contentHTML += `<h3 class="news-title">${newsItem.title}</h3>`;
+        }
+        
+        // Only add details if they exist
+        if (newsItem.details) {
+            contentHTML += `<div class="news-details">${newsItem.details}</div>`;
+        }
+        
+        contentHTML += '</div>';
+        
+        card.innerHTML = contentHTML;
         grid.appendChild(card);
     });
+}
+
+// Open image in modal
+function openImageModal(imageUrl) {
+    const modal = document.getElementById('match-modal');
+    const detailsContainer = document.getElementById('match-details');
+    
+    detailsContainer.innerHTML = `
+        <div style="text-align: center;">
+            <img src="${imageUrl}" style="max-width: 100%; max-height: 80vh; object-fit: contain;" alt="صورة">
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+}
+
+// Toggle season selector on mobile
+function toggleSeasonSelector() {
+    const selector = document.querySelector('.season-selector');
+    const toggleBtn = document.querySelector('.season-toggle-btn');
+    
+    if (selector && toggleBtn) {
+        selector.classList.toggle('active');
+        
+        if (selector.classList.contains('active')) {
+            toggleBtn.textContent = '×';
+        } else {
+            toggleBtn.textContent = '☰';
+        }
+    }
+}
+
+// Toggle weeks sidebar on mobile
+function toggleWeeksSidebar() {
+    const sidebar = document.querySelector('.weeks-sidebar');
+    const toggleBtn = document.querySelector('.weeks-toggle-btn');
+    
+    if (sidebar && toggleBtn) {
+        sidebar.classList.toggle('active');
+        
+        if (sidebar.classList.contains('active')) {
+            toggleBtn.textContent = '×';
+        } else {
+            toggleBtn.textContent = '📅';
+        }
+    }
 }
 
 // Display venues
@@ -1482,6 +1580,14 @@ function scrollToWeek(week) {
     }
     
     if (targetSection) {
+        // Close weeks sidebar on mobile if open
+        const sidebar = document.querySelector('.weeks-sidebar');
+        const toggleBtn = document.querySelector('.weeks-toggle-btn');
+        if (sidebar && sidebar.classList.contains('active')) {
+            sidebar.classList.remove('active');
+            if (toggleBtn) toggleBtn.textContent = '📅';
+        }
+        
         targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         
         // Update active button
