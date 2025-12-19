@@ -872,13 +872,15 @@ h3 {
         grid-template-columns: 1fr;
     }
     
-    .standings-container {
-        margin: 0 -15px;
-        padding: 0 15px;
+    .standings-scroll-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
-    
+
     .standings-table {
-        font-size: 0.85em;
+        min-width: 800px; /* Force table to be wider than the screen */
+        font-size: 0.9em;
     }
 }
 footer {
@@ -4376,4 +4378,70 @@ footer p {
         padding: 8px 5px;
         white-space: nowrap;
     }
+}
+
+/* Collapsible Section Styles */
+.collapsible-section {
+    background: white;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 2px solid #f0f0f0;
+}
+
+.collapsible-header {
+    background: linear-gradient(135deg, #7e0000 0%, #9e0000 100%);
+    color: white;
+    padding: 20px 25px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.collapsible-header:hover {
+    background: linear-gradient(135deg, #9e0000 0%, #be0000 100%);
+    transform: translateX(-3px);
+}
+
+.collapsible-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toggle-icon {
+    font-size: 1.2em;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.toggle-icon.rotated {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    background: white;
+}
+
+.collapsible-content.active {
+    max-height: 5000px;
+    padding: 25px;
+}
+
+.team-players-list,
+.team-matches-list {
+    background: transparent;
+    padding: 0;
 }
