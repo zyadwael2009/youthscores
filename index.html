@@ -47,15 +47,6 @@
 
             </section>
 
-            <!-- TEMPORARY: Test Stage Filter Button -->
-            <section class="test-section" style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
-                <h3 style="color: #856404; margin-bottom: 10px;">🧪 اختبار فلتر المراحل (مؤقت)</h3>
-                <button onclick="loadTestStageData()" style="background: #ffc107; color: #000; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
-                    تحميل بيانات الاختبار (A2005Data2)
-                </button>
-                <p style="font-size: 12px; color: #856404; margin-top: 10px;">سيتم إزالة هذا الزر بعد الاختبار</p>
-            </section>
-
             <section class="quick-links">
                 <h3>روابط سريعة</h3>
                 <div class="quick-links-grid">
@@ -81,6 +72,7 @@
         <!-- Competitions Page -->
         <div id="competitions-page" class="page">
             <h2>البطولات</h2>
+            <button class="season-toggle-btn" onclick="toggleSeasonSelector()">☰</button>
             <div class="competitions-layout">
                 <div id="season-selector" class="season-selector">
                     <!-- Season buttons will be inserted here -->
@@ -130,6 +122,7 @@
             
             <!-- Matches Tab -->
             <div id="matches-tab" class="competition-tab active">
+                <button class="weeks-toggle-btn" onclick="toggleWeeksSidebar()">📅</button>
                 <div class="matches-with-sidebar">
                     <div class="weeks-sidebar">
                         <h3>الأسابيع</h3>
