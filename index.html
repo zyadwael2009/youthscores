@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youth Scores - نتائج الشباب</title>
+    <title>Youth Scores -  بطولات الناشئين</title>
+    <link rel="icon" href="icon.png" type="image/x-icon">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
         <div class="container">
             <h1>⚽ Youth Scores</h1>
-            <p class="subtitle">نتائج مباريات الناشئين</p>
+            <p class="subtitle">بطولات الناشئين</p>
         </div>
     </header>
 
@@ -143,7 +144,9 @@
                         <option value="all">جميع المراحل</option>
                     </select>
                 </div>
-                <div id="standings-container"></div>
+                <div class="standings-scroll-wrapper">
+                    <div id="standings-container"></div>
+                </div>
             </div>
             
             <!-- Statistics Tab -->
