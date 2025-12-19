@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Youth Scores - نتائج الشباب</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>⚽ Youth Scores</h1>
+            <p class="subtitle">نتائج مباريات الناشئين</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <button class="nav-btn active" onclick="showPage('home')">
+                <span class="icon">🏠</span>
+                الرئيسية
+            </button>
+            <button class="nav-btn" onclick="showPage('competitions')">
+                <span class="icon">🏆</span>
+                البطولات
+            </button>
+            <button class="nav-btn" onclick="showPage('news')">
+                <span class="icon">📰</span>
+                الأخبار
+            </button>
+            <button class="nav-btn" onclick="showPage('venues')">
+                <span class="icon">📍</span>
+                الملاعب
+            </button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Home Page -->
+        <div id="home-page" class="page active">
+            <section class="today-matches">
+                <h2>مباريات اليوم</h2>
+                <div id="today-matches-container" class="loading">
+                    <div class="loader"></div>
+                    <p>جاري تحميل المباريات...</p>
+                </div>
+
+            </section>
+
+            <!-- TEMPORARY: Test Stage Filter Button -->
+            <section class="test-section" style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
+                <h3 style="color: #856404; margin-bottom: 10px;">🧪 اختبار فلتر المراحل (مؤقت)</h3>
+                <button onclick="loadTestStageData()" style="background: #ffc107; color: #000; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                    تحميل بيانات الاختبار (A2005Data2)
+                </button>
+                <p style="font-size: 12px; color: #856404; margin-top: 10px;">سيتم إزالة هذا الزر بعد الاختبار</p>
+            </section>
+
+            <section class="quick-links">
+                <h3>روابط سريعة</h3>
+                <div class="quick-links-grid">
+                    <div class="quick-link-card" onclick="showPage('competitions')">
+                        <span class="icon">🏆</span>
+                        <h4>جميع البطولات</h4>
+                        <p>تصفح جميع بطولات الموسم</p>
+                    </div>
+                    <div class="quick-link-card" onclick="showPage('news')">
+                        <span class="icon">📰</span>
+                        <h4>آخر الأخبار</h4>
+                        <p>تابع أحدث الأخبار</p>
+                    </div>
+                    <div class="quick-link-card" onclick="showPage('venues')">
+                        <span class="icon">📍</span>
+                        <h4>مواقع الملاعب</h4>
+                        <p>اعرف مكان أي ملعب</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Competitions Page -->
+        <div id="competitions-page" class="page">
+            <h2>البطولات</h2>
+            <div class="competitions-layout">
+                <div id="season-selector" class="season-selector">
+                    <!-- Season buttons will be inserted here -->
+                </div>
+                <div id="seasons-container" class="competitions-content loading">
+                    <div class="loader"></div>
+                    <p>جاري تحميل البطولات...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Page -->
+        <div id="news-page" class="page">
+            <h2>الأخبار</h2>
+            <div id="news-container" class="loading">
+                <div class="loader"></div>
+                <p>جاري تحميل الأخبار...</p>
+            </div>
+        </div>
+
+        <!-- Venues Page -->
+        <div id="venues-page" class="page">
+            <h2>الملاعب</h2>
+            <div id="venues-container" class="loading">
+                <div class="loader"></div>
+                <p>جاري تحميل الملاعب...</p>
+            </div>
+        </div>
+
+        <!-- Competition Matches Page -->
+        <div id="competition-matches-page" class="page">
+            <div class="competition-header">
+                <button class="back-btn" onclick="showPage('competitions')">← عودة</button>
+                <h2 id="competition-title"></h2>
+            </div>
+            
+            <!-- Competition Tabs -->
+            <div class="competition-tabs-wrapper">
+                <div class="competition-tabs">
+                    <button class="tab-btn active" onclick="showCompetitionTab('matches')">المباريات</button>
+                    <button class="tab-btn" onclick="showCompetitionTab('standings')">الجدول</button>
+                    <button class="tab-btn" onclick="showCompetitionTab('statistics')">الإحصائيات</button>
+                    <button class="tab-btn" onclick="showCompetitionTab('teams')">الفرق</button>
+                </div>
+                <button class="tabs-toggle-btn" onclick="toggleTabs()">▲ إخفاء القائمة</button>
+            </div>
+            
+            <!-- Matches Tab -->
+            <div id="matches-tab" class="competition-tab active">
+                <div class="matches-with-sidebar">
+                    <div class="weeks-sidebar">
+                        <h3>الأسابيع</h3>
+                        <div id="weeks-list"></div>
+                    </div>
+                    <div id="competition-matches-container" class="matches-content">
+                        <div class="loader"></div>
+                        <p>جاري تحميل المباريات...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Standings Tab -->
+            <div id="standings-tab" class="competition-tab">
+                <div class="stage-filter">
+                    <label>المرحلة:</label>
+                    <select id="stage-select" onchange="filterStandingsByStage()">
+                        <option value="all">جميع المراحل</option>
+                    </select>
+                </div>
+                <div id="standings-container"></div>
+            </div>
+            
+            <!-- Statistics Tab -->
+            <div id="statistics-tab" class="competition-tab">
+                <div class="stats-sections">
+                    <button class="stats-btn active" onclick="showStatsSection('analysis')">تحليل شامل</button>
+                    <button class="stats-btn" onclick="showStatsSection('scorers')">الهدافين</button>
+                    <button class="stats-btn" onclick="showStatsSection('assists')">صناعة الأهداف</button>
+                    <button class="stats-btn" onclick="showStatsSection('cleansheets')">الشباك النظيفة</button>
+                </div>
+                <div id="analysis-section" class="stats-section active"></div>
+                <div id="scorers-section" class="stats-section"></div>
+                <div id="assists-section" class="stats-section"></div>
+                <div id="cleansheets-section" class="stats-section"></div>
+            </div>
+            
+            <!-- Teams Tab -->
+            <div id="teams-tab" class="competition-tab">
+                <div id="teams-container"></div>
+            </div>
+        </div>
+        
+        <!-- Team Details Page -->
+        <div id="team-details-page" class="page">
+            <div class="competition-header">
+                <button class="back-btn" onclick="showPage('competition-matches')">← عودة</button>
+                <h2 id="team-title"></h2>
+            </div>
+            <div id="team-header-container"></div>
+            <div id="team-info-container"></div>
+            
+            <!-- Team Statistics Section -->
+            <div class="team-stats-section">
+                <h3 class="section-title">إحصائيات الفريق</h3>
+                <div class="stats-tabs">
+                    <button class="stats-btn active" onclick="showTeamStats('scorers')">الهدافون</button>
+                    <button class="stats-btn" onclick="showTeamStats('assists')">صناعة الأهداف</button>
+                </div>
+                <div id="team-stats-container"></div>
+            </div>
+            
+            <div id="team-players-container"></div>
+            <div id="team-matches-container"></div>
+        </div>
+
+        <!-- Age Selection Modal -->
+        <div id="age-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeAgeModal()">&times;</span>
+                <h2>اختر الفئة العمرية</h2>
+                <div id="age-options" class="age-options"></div>
+            </div>
+        </div>
+
+        <!-- Sector Selection Modal -->
+        <div id="sector-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeSectorModal()">&times;</span>
+                <h2>اختر المجموعة</h2>
+                <div id="sector-options" class="age-options"></div>
+            </div>
+        </div>
+
+        <!-- Match Details Modal -->
+        <div id="match-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <div id="match-details"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Youth Scores - جميع الحقوق محفوظة</p>
+            <p class="small">البيانات محدثة من GitHub</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
