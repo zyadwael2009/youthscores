@@ -280,8 +280,17 @@ function displayTodayMatches() {
 
     console.log(`Displaying ${Math.min(4, allMatches.length)} matches`);
 
+    // Get competition info from first match
+    const firstMatch = allMatches[0];
+    const competitionHeader = firstMatch.competition ? `
+        <div class="today-matches-competition-header">
+            <span class="competition-name">${firstMatch.competition}</span>
+            ${firstMatch.age ? `<span class="competition-age">${firstMatch.age}</span>` : ''}
+        </div>
+    ` : '';
+
     // Display only first 4 matches with details
-    container.innerHTML = '<div class="matches-grid"></div>';
+    container.innerHTML = competitionHeader + '<div class="matches-grid"></div>';
     const grid = container.querySelector('.matches-grid');
     
     const matchesToShow = allMatches.slice(0, 4);
@@ -2186,14 +2195,19 @@ function findBestTeams(teamStats, statType, matches) {
     const isAttack = statType.includes('attack');
     const isStrongest = statType.includes('strongest');
     
-    let bestValue = isStrongest ? -1 : 999999;
+    // For attack: strongest = most goals scored, weakest = least goals scored
+    // For defense: strongest = least goals conceded, weakest = most goals conceded
+    let bestValue = (isStrongest && isAttack) || (!isStrongest && !isAttack) ? -1 : 999999;
     const bestTeamIds = [];
     
     // Find best value and all teams with that value
     Object.keys(teamStats).forEach(teamId => {
         const value = isAttack ? teamStats[teamId].goalsFor : teamStats[teamId].goalsAgainst;
         
-        const isBetter = isStrongest ? (value > bestValue) : (value < bestValue);
+        // For strongest attack or weakest defense: want higher value
+        // For weakest attack or strongest defense: want lower value
+        const wantHigher = (isStrongest && isAttack) || (!isStrongest && !isAttack);
+        const isBetter = wantHigher ? (value > bestValue) : (value < bestValue);
         
         if (isBetter) {
             bestValue = value;
