@@ -4445,3 +4445,38 @@ footer p {
     background: transparent;
     padding: 0;
 }
+
+/* Fix team name column width in standings table to auto-fit */
+.standings-table table {
+    table-layout: auto !important;
+    width: auto !important;
+    min-width: 100% !important;
+}
+
+.standings-table th,
+.standings-table td {
+    padding: 12px 8px !important;
+    white-space: nowrap !important;
+}
+
+.standings-table th:nth-child(2),
+.standings-table td:nth-child(2) {
+    text-align: right !important;
+    width: 1% !important;
+}
+
+.standings-table .team-cell {
+    white-space: nowrap !important;
+    justify-content: flex-start !important;
+}
+
+.standings-table .team-logo {
+    flex-shrink: 0 !important;
+    width: 30px !important;
+    height: 30px !important;
+}
+
+.standings-table .team-name {
+    white-space: nowrap !important;
+    flex: none !important;
+}
