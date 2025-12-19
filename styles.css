@@ -1224,11 +1224,11 @@ footer p {
 }
 
 .sector-header {
-    background: rgba(255, 255, 255, 0.9);
+    background: #7e0000;
     padding: 10px 20px;
     border-radius: 0;
     margin-bottom: 2px;
-    border-left: 4px solid #7e0000;
+    border-left: none;
 }
 
 .sector-header-content {
@@ -1242,21 +1242,21 @@ footer p {
     color: white;
     margin: 0;
     font-size: 1em;
-    font-weight: 500;
+    font-weight: 600;
     text-shadow: none;
     flex: 0 0 auto;
 }
 
 .sector-competition {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     font-weight: 500;
-    font-size: 0.85em;
+    font-size: 0.9em;
     flex: 1;
     text-align: center;
 }
 
 .sector-date {
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.9);
     font-weight: 400;
     font-size: 0.85em;
     flex: 0 0 auto;
@@ -4339,24 +4339,41 @@ footer p {
     border-radius: 8px;
 }
 /* Standings Container - Mobile Horizontal Scroll */
-#standings-container {
+.standings-scroll-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    margin: 0;
+}
+
+.standings-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 20px;
+}
+
+#standings-container {
+    min-width: 100%;
+}
+
+.standings-table table {
+    min-width: 650px;
 }
 
 @media (max-width: 768px) {
-    #standings-container {
+    .standings-scroll-wrapper {
         margin: 0 -15px;
         padding: 0 15px;
     }
     
-    .standings-table table {
-        min-width: 600px;
+    .standings-table-wrapper {
+        margin: 0 -15px 20px -15px;
+        padding: 0 15px;
     }
     
     .standings-table th,
     .standings-table td {
-        font-size: 0.85em;
-        padding: 10px 5px;
+        font-size: 0.8em;
+        padding: 8px 5px;
+        white-space: nowrap;
     }
 }
