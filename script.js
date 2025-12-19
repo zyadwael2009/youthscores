@@ -18,6 +18,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// Toggle collapsible sections
+function toggleSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    const header = section.previousElementSibling;
+    const icon = header.querySelector('.toggle-icon');
+    
+    section.classList.toggle('active');
+    icon.classList.toggle('rotated');
+}
+
 // Load main data from dynamic config URL (API only)
 async function loadMainData() {
     const container = document.getElementById('today-matches-container');
@@ -1884,23 +1894,24 @@ function getHeadToHeadResult(teamA, teamB) {
 function createStandingsTable(standings, teamsData) {
     const wrapper = document.createElement('div');
     wrapper.className = 'standings-table-wrapper';
-    wrapper.style.overflowX = 'auto';
-    wrapper.style.webkitOverflowScrolling = 'touch';
+    wrapper.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px;';
     
     const table = document.createElement('div');
     table.className = 'standings-table';
     
     // Create a map for quick team info lookup
     const teamInfoMap = {};
-    teamsData.forEach(team => {
-        teamInfoMap[team.team_id] = {
-            name: team.name || team.teamName || team.team_name || 'فريق غير معروف',
-            logo: team.logo || null
-        };
-    });
+    if (teamsData && Array.isArray(teamsData)) {
+        teamsData.forEach(team => {
+            teamInfoMap[team.team_id] = {
+                name: team.name || team.teamName || team.team_name || 'فريق غير معروف',
+                logo: team.logo || null
+            };
+        });
+    }
     
     let html = `
-        <table>
+        <table class="standings-table">
             <thead>
                 <tr>
                     <th>#</th>
@@ -2672,7 +2683,7 @@ function displayTeamPlayers(teamData, container) {
         return;
     }
     
-    let html = '<div class="team-players-section"><h3>الجهاز الفني واللاعبين</h3>';
+    let html = '<div class="team-players-list">';
     
     const players = teamData.players;
     
@@ -2773,11 +2784,7 @@ function displayTeamMatches(teamId, teamName, container) {
     // Clear container and create main section
     container.innerHTML = '';
     const mainSection = document.createElement('div');
-    mainSection.className = 'team-matches-section';
-    
-    const title = document.createElement('h3');
-    title.textContent = 'مباريات الفريق';
-    mainSection.appendChild(title);
+    mainSection.className = 'team-matches-list';
     
     sortedDates.forEach(date => {
         const weeksInDate = Object.keys(dateGroups[date]);
@@ -2824,7 +2831,7 @@ let currentTeamId = null;
 
 function showTeamStats(statType) {
     // Update active button
-    document.querySelectorAll('.team-stats-section .stats-btn').forEach(btn => {
+    document.querySelectorAll('.stats-tabs .stats-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     event.target.classList.add('active');
