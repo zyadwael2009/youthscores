@@ -1882,6 +1882,11 @@ function getHeadToHeadResult(teamA, teamB) {
 }
 
 function createStandingsTable(standings, teamsData) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'standings-table-wrapper';
+    wrapper.style.overflowX = 'auto';
+    wrapper.style.webkitOverflowScrolling = 'touch';
+    
     const table = document.createElement('div');
     table.className = 'standings-table';
     
@@ -1939,7 +1944,8 @@ function createStandingsTable(standings, teamsData) {
     
     html += '</tbody></table>';
     table.innerHTML = html;
-    return table;
+    wrapper.appendChild(table);
+    return wrapper;
 }
 
 // ==================== STATISTICS ====================
