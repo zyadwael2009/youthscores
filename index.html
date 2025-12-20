@@ -19,22 +19,22 @@
 
     <nav>
         <div class="container">
-            <button class="nav-btn active" onclick="showPage('home')">
+            <a href="index.html" class="nav-btn active">
                 <span class="icon">🏠</span>
                 الرئيسية
-            </button>
-            <button class="nav-btn" onclick="showPage('competitions')">
+            </a>
+            <a href="competitions.html" class="nav-btn">
                 <span class="icon">🏆</span>
                 البطولات
-            </button>
-            <button class="nav-btn" onclick="showPage('news')">
+            </a>
+            <a href="news.html" class="nav-btn">
                 <span class="icon">📰</span>
                 الأخبار
-            </button>
-            <button class="nav-btn" onclick="showPage('venues')">
+            </a>
+            <a href="venues.html" class="nav-btn">
                 <span class="icon">📍</span>
                 الملاعب
-            </button>
+            </a>
             <a href="contact.html" class="nav-btn">
                 <span class="icon">📞</span>
                 اتصل بنا
@@ -57,185 +57,23 @@
             <section class="quick-links">
                 <h3>روابط سريعة</h3>
                 <div class="quick-links-grid">
-                    <div class="quick-link-card" onclick="showPage('competitions')">
+                    <a href="competitions.html" class="quick-link-card">
                         <span class="icon">🏆</span>
                         <h4>جميع البطولات</h4>
                         <p>تصفح جميع بطولات الموسم</p>
-                    </div>
-                    <div class="quick-link-card" onclick="showPage('news')">
+                    </a>
+                    <a href="news.html" class="quick-link-card">
                         <span class="icon">📰</span>
                         <h4>آخر الأخبار</h4>
                         <p>تابع أحدث الأخبار</p>
-                    </div>
-                    <div class="quick-link-card" onclick="showPage('venues')">
+                    </a>
+                    <a href="venues.html" class="quick-link-card">
                         <span class="icon">📍</span>
                         <h4>مواقع الملاعب</h4>
                         <p>اعرف مكان أي ملعب</p>
-                    </div>
+                    </a>
                 </div>
             </section>
-        </div>
-
-        <!-- Competitions Page -->
-        <div id="competitions-page" class="page">
-            <h2>البطولات</h2>
-            <button class="season-toggle-btn" onclick="toggleSeasonSelector()">☰</button>
-            <div class="competitions-layout">
-                <div id="season-selector" class="season-selector">
-                    <!-- Season buttons will be inserted here -->
-                </div>
-                <div id="seasons-container" class="competitions-content loading">
-                    <div class="loader"></div>
-                    <p>جاري تحميل البطولات...</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- News Page -->
-        <div id="news-page" class="page">
-            <h2>الأخبار</h2>
-            <div id="news-container" class="loading">
-                <div class="loader"></div>
-                <p>جاري تحميل الأخبار...</p>
-            </div>
-        </div>
-
-        <!-- Venues Page -->
-        <div id="venues-page" class="page">
-            <h2>الملاعب</h2>
-            <div id="venues-container" class="loading">
-                <div class="loader"></div>
-                <p>جاري تحميل الملاعب...</p>
-            </div>
-        </div>
-
-        <!-- Competition Matches Page -->
-        <div id="competition-matches-page" class="page">
-            <div class="competition-header">
-                <button class="back-btn" onclick="showPage('competitions')">← عودة</button>
-                <h2 id="competition-title"></h2>
-            </div>
-            
-            <!-- Competition Tabs -->
-            <div class="competition-tabs-wrapper">
-                <div class="competition-tabs">
-                    <button class="tab-btn active" onclick="showCompetitionTab('matches')">المباريات</button>
-                    <button class="tab-btn" onclick="showCompetitionTab('standings')">الجدول</button>
-                    <button class="tab-btn" onclick="showCompetitionTab('statistics')">الإحصائيات</button>
-                    <button class="tab-btn" onclick="showCompetitionTab('teams')">الفرق</button>
-                </div>
-                <button class="tabs-toggle-btn" onclick="toggleTabs()">▲ إخفاء القائمة</button>
-            </div>
-            
-            <!-- Matches Tab -->
-            <div id="matches-tab" class="competition-tab active">
-                <button class="weeks-toggle-btn" onclick="toggleWeeksSidebar()">📅</button>
-                <div class="matches-with-sidebar">
-                    <div class="weeks-sidebar">
-                        <h3>الأسابيع</h3>
-                        <div id="weeks-list"></div>
-                    </div>
-                    <div id="competition-matches-container" class="matches-content">
-                        <div class="loader"></div>
-                        <p>جاري تحميل المباريات...</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Standings Tab -->
-            <div id="standings-tab" class="competition-tab">
-                <div class="stage-filter">
-                    <label>المرحلة:</label>
-                    <select id="stage-select" onchange="filterStandingsByStage()">
-                        <option value="all">جميع المراحل</option>
-                    </select>
-                </div>
-                <div id="standings-container" class="standings-scroll-wrapper"></div>
-            </div>
-            
-            <!-- Statistics Tab -->
-            <div id="statistics-tab" class="competition-tab">
-                <div class="stats-sections">
-                    <button class="stats-btn active" onclick="showStatsSection('analysis')">تحليل شامل</button>
-                    <button class="stats-btn" onclick="showStatsSection('scorers')">الهدافين</button>
-                    <button class="stats-btn" onclick="showStatsSection('assists')">صناعة الأهداف</button>
-                    <button class="stats-btn" onclick="showStatsSection('cleansheets')">الشباك النظيفة</button>
-                </div>
-                <div id="analysis-section" class="stats-section active"></div>
-                <div id="scorers-section" class="stats-section"></div>
-                <div id="assists-section" class="stats-section"></div>
-                <div id="cleansheets-section" class="stats-section"></div>
-            </div>
-            
-            <!-- Teams Tab -->
-            <div id="teams-tab" class="competition-tab">
-                <div id="teams-container"></div>
-            </div>
-        </div>
-        
-        <!-- Team Details Page -->
-        <div id="team-details-page" class="page">
-            <div class="competition-header">
-                <button class="back-btn" onclick="showPage('competition-matches')">← عودة</button>
-                <h2 id="team-title"></h2>
-            </div>
-            <div id="team-header-container"></div>
-            <div id="team-info-container"></div>
-            
-            <!-- Team Matches Section -->
-            <div class="collapsible-section">
-                <div class="collapsible-header" onclick="toggleSection('team-matches-section')">
-                    <h3>⚽ مباريات الفريق</h3>
-                    <span class="toggle-icon">▼</span>
-                </div>
-                <div id="team-matches-section" class="collapsible-content">
-                    <div id="team-matches-container"></div>
-                </div>
-            </div>
-            
-            <!-- Team Statistics Section -->
-            <div class="collapsible-section">
-                <div class="collapsible-header" onclick="toggleSection('team-stats-section')">
-                    <h3>📊 إحصائيات الفريق</h3>
-                    <span class="toggle-icon">▼</span>
-                </div>
-                <div id="team-stats-section" class="collapsible-content">
-                    <div class="stats-tabs">
-                        <button class="stats-btn active" onclick="showTeamStats('scorers')">الهدافون</button>
-                        <button class="stats-btn" onclick="showTeamStats('assists')">صناعة الأهداف</button>
-                    </div>
-                    <div id="team-stats-container"></div>
-                </div>
-            </div>
-            
-            <!-- Team Players Section -->
-            <div class="collapsible-section">
-                <div class="collapsible-header" onclick="toggleSection('team-players-section')">
-                    <h3>👥 الجهاز الفني واللاعبين</h3>
-                    <span class="toggle-icon">▼</span>
-                </div>
-                <div id="team-players-section" class="collapsible-content">
-                    <div id="team-players-container"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Age Selection Modal -->
-        <div id="age-modal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeAgeModal()">&times;</span>
-                <h2>اختر الفئة العمرية</h2>
-                <div id="age-options" class="age-options"></div>
-            </div>
-        </div>
-
-        <!-- Sector Selection Modal -->
-        <div id="sector-modal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeSectorModal()">&times;</span>
-                <h2>اختر المجموعة</h2>
-                <div id="sector-options" class="age-options"></div>
-            </div>
         </div>
 
         <!-- Match Details Modal -->
@@ -249,9 +87,20 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Youth Scores - جميع الحقوق محفوظة</p>
-            <p class="small">البيانات محدثة من GitHub</p>
+  
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p class="small">هذا الموقع لمتابعة نتائج مسابقات الناشئين في مصر</p>
+                    <p class="small">هذه البيانات ليست بيانات رسمية و لكن تم جمعها من خلال المتابعة الشخصية للمباريات او من رسائل اولياء امور و اللاعبين او من صفحات التواصل الاجتماعي للاندية</p>
+                </div>
+                <div class="footer-right">
+                    <a href="https://play.google.com/store/apps/details?id=com.waellotfy.youthscores&pcampaignid=web_share" target="_blank">
+                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" style="height: 60px;">
+                    </a>
+                </div>
+            </div>
         </div>
+                  <p>&copy; 2025 Youth Scores - جميع الحقوق محفوظة</p>
     </footer>
 
     <script src="script.js"></script>
