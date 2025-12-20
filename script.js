@@ -9,10 +9,20 @@ let allMatches = [];
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await loadMainData();
-        await loadRandomMatchesForHome();
-        displayCompetitions();
-        displayNews();
-        displayVenues();
+        
+        // Only run functions if their containers exist on the current page
+        if (document.getElementById('today-matches-container')) {
+            await loadRandomMatchesForHome();
+        }
+        if (document.getElementById('seasons-container')) {
+            displayCompetitions();
+        }
+        if (document.getElementById('news-container')) {
+            displayNews();
+        }
+        if (document.getElementById('venues-container')) {
+            displayVenues();
+        }
     } catch (error) {
         console.error('Initialization error:', error);
     }
@@ -76,34 +86,36 @@ async function loadMainData() {
     } catch (error) {
         console.error('Error loading main data:', error);
         
-        // Show detailed error
-        if (error.message.includes('NetworkError') || error.message.includes('CORS')) {
-            container.innerHTML = `
-                <div class="no-data" style="text-align: center; padding: 20px;">
-                    <h3 style="color: #7e0000; margin-bottom: 15px;">❌ خطأ في CORS</h3>
-                    <p>يجب إضافة CORS headers إلى API في Vercel</p>
-                </div>
-            `;
-        } else if (error.message.includes('500')) {
-            container.innerHTML = `
-                <div class="no-data" style="text-align: center; padding: 20px;">
-                    <h3 style="color: #7e0000; margin-bottom: 15px;">❌ خطأ في الخادم (500)</h3>
-                    <p>يوجد خطأ في API على Vercel. يرجى التحقق من:</p>
-                    <ul style="text-align: right; display: inline-block; margin: 15px 0;">
-                        <li>أن CORS headers صحيحة</li>
-                        <li>أن الكود في API يعمل بدون أخطاء</li>
-                        <li>سجلات Vercel للحصول على تفاصيل الخطأ</li>
-                    </ul>
-                    <p style="color: #666; font-size: 14px; margin-top: 15px;">راجع Console للحصول على المزيد من التفاصيل</p>
-                </div>
-            `;
-        } else {
-            container.innerHTML = `
-                <div class="no-data" style="text-align: center; padding: 20px;">
-                    <h3 style="color: #7e0000;">فشل تحميل البيانات</h3>
-                    <p style="color: #666; margin-top: 10px;">${error.message}</p>
-                </div>
-            `;
+        // Show detailed error only if container exists
+        if (container) {
+            if (error.message.includes('NetworkError') || error.message.includes('CORS')) {
+                container.innerHTML = `
+                    <div class="no-data" style="text-align: center; padding: 20px;">
+                        <h3 style="color: #7e0000; margin-bottom: 15px;">❌ خطأ في CORS</h3>
+                        <p>يجب إضافة CORS headers إلى API في Vercel</p>
+                    </div>
+                `;
+            } else if (error.message.includes('500')) {
+                container.innerHTML = `
+                    <div class="no-data" style="text-align: center; padding: 20px;">
+                        <h3 style="color: #7e0000; margin-bottom: 15px;">❌ خطأ في الخادم (500)</h3>
+                        <p>يوجد خطأ في API على Vercel. يرجى التحقق من:</p>
+                        <ul style="text-align: right; display: inline-block; margin: 15px 0;">
+                            <li>أن CORS headers صحيحة</li>
+                            <li>أن الكود في API يعمل بدون أخطاء</li>
+                            <li>سجلات Vercel للحصول على تفاصيل الخطأ</li>
+                        </ul>
+                        <p style="color: #666; font-size: 14px; margin-top: 15px;">راجع Console للحصول على المزيد من التفاصيل</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="no-data" style="text-align: center; padding: 20px;">
+                        <h3 style="color: #7e0000;">فشل تحميل البيانات</h3>
+                        <p style="color: #666; margin-top: 10px;">${error.message}</p>
+                    </div>
+                `;
+            }
         }
         throw error;
     }
@@ -272,6 +284,11 @@ async function loadRandomMatchesForHome() {
 // Display matches on home page (just show first 4 from loaded matches)
 function displayTodayMatches() {
     const container = document.getElementById('today-matches-container');
+    
+    if (!container) {
+        console.log('today-matches-container not found on this page');
+        return;
+    }
     
     if (!allMatches || allMatches.length === 0) {
         container.innerHTML = '<div class="no-data">لا توجد مباريات متاحة حالياً</div>';
@@ -2873,16 +2890,19 @@ function displayTeamScorers(container, teamId) {
         
         // Process home team goals
         if (match.home_team_id === teamId && match.home_scorers && Array.isArray(match.home_scorers)) {
-            match.home_scorers.forEach(scorer => {
-                if (!scorer || scorer === 'صناعة الاهداف' || scorer === 'Assists' || 
-                    scorer === 'لا يوجد بيانات' || scorer.trim() === '') return;
+            const assistMarker = 'صناعة الاهداف';
+            const assistIndex = match.home_scorers.findIndex(item => item === assistMarker || item === 'Assists');
+            const goals = assistIndex === -1 ? match.home_scorers : match.home_scorers.slice(0, assistIndex);
+            
+            goals.forEach(scorer => {
+                if (!scorer || scorer === 'لا يوجد بيانات' || scorer.trim() === '') return;
                 
                 // Parse player name and goal count
                 const match_result = scorer.match(/^(.+?)\s*\((\d+)\)$/);
                 if (match_result) {
                     const playerName = match_result[1].trim();
-                    const goals = parseInt(match_result[2]);
-                    scorersMap[playerName] = (scorersMap[playerName] || 0) + goals;
+                    const goalCount = parseInt(match_result[2]);
+                    scorersMap[playerName] = (scorersMap[playerName] || 0) + goalCount;
                 } else {
                     scorersMap[scorer.trim()] = (scorersMap[scorer.trim()] || 0) + 1;
                 }
@@ -2891,15 +2911,19 @@ function displayTeamScorers(container, teamId) {
         
         // Process away team goals
         if (match.away_team_id === teamId && match.away_scorers && Array.isArray(match.away_scorers)) {
-            match.away_scorers.forEach(scorer => {
-                if (!scorer || scorer === 'صناعة الاهداف' || scorer === 'Assists' || 
-                    scorer === 'لا يوجد بيانات' || scorer.trim() === '') return;
+            const assistMarker = 'صناعة الاهداف';
+            const assistIndex = match.away_scorers.findIndex(item => item === assistMarker || item === 'Assists');
+            const goals = assistIndex === -1 ? match.away_scorers : match.away_scorers.slice(0, assistIndex);
+            
+            goals.forEach(scorer => {
+                if (!scorer || scorer === 'لا يوجد بيانات' || scorer.trim() === '') return;
                 
+                // Parse player name and goal count
                 const match_result = scorer.match(/^(.+?)\s*\((\d+)\)$/);
                 if (match_result) {
                     const playerName = match_result[1].trim();
-                    const goals = parseInt(match_result[2]);
-                    scorersMap[playerName] = (scorersMap[playerName] || 0) + goals;
+                    const goalCount = parseInt(match_result[2]);
+                    scorersMap[playerName] = (scorersMap[playerName] || 0) + goalCount;
                 } else {
                     scorersMap[scorer.trim()] = (scorersMap[scorer.trim()] || 0) + 1;
                 }
@@ -2945,6 +2969,7 @@ function displayTeamAssists(container, teamId) {
                 assists.forEach(assister => {
                     if (!assister || assister === 'لا يوجد بيانات' || assister.trim() === '') return;
                     
+                    // Parse player name and assist count
                     const match_result = assister.match(/^(.+?)\s*\((\d+)\)$/);
                     if (match_result) {
                         const playerName = match_result[1].trim();
@@ -2965,6 +2990,7 @@ function displayTeamAssists(container, teamId) {
                 assists.forEach(assister => {
                     if (!assister || assister === 'لا يوجد بيانات' || assister.trim() === '') return;
                     
+                    // Parse player name and assist count
                     const match_result = assister.match(/^(.+?)\s*\((\d+)\)$/);
                     if (match_result) {
                         const playerName = match_result[1].trim();
