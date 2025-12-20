@@ -961,6 +961,75 @@ footer p {
     font-size: 0.85em;
 }
 
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.footer-left {
+    flex: 1;
+    min-width: 250px;
+    text-align: right;
+}
+
+.footer-left p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.footer-right {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #7e0000 0%, #a00000 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(126, 0, 0, 0.3);
+    border: 2px solid transparent;
+}
+
+.download-btn:hover {
+    background: linear-gradient(135deg, #a00000 0%, #c00000 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(126, 0, 0, 0.4);
+}
+
+.download-icon {
+    font-size: 1.3em;
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .footer-left,
+    .footer-right {
+        width: 100%;
+    }
+    
+    .footer-left {
+        text-align: center;
+    }
+}
+
 /* View All Button */
 .view-all-btn {
     background: white;
