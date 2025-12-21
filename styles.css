@@ -961,6 +961,25 @@ footer p {
     font-size: 0.85em;
 }
 
+.footer-links {
+    margin: 15px 0;
+    padding: 10px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.footer-links a {
+    color: #7e0000;
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 0.9em;
+    transition: color 0.3s;
+}
+
+.footer-links a:hover {
+    color: #a00000;
+    text-decoration: underline;
+}
+
 .footer-content {
     display: flex;
     justify-content: space-between;
@@ -4732,6 +4751,73 @@ footer p {
     color: #555;
     font-size: 1.1em;
     line-height: 1.6;
+}
+
+/* Policy Pages Styling */
+.content-section {
+    background: rgba(255, 255, 255, 0.98);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    line-height: 1.8;
+}
+
+.content-section .date {
+    color: #999;
+    font-size: 0.9em;
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
+.policy-section {
+    margin: 30px 0;
+    padding: 20px;
+    border-right: 4px solid #7e0000;
+    background: rgba(126, 0, 0, 0.02);
+    border-radius: 8px;
+}
+
+.policy-section h3 {
+    color: #7e0000;
+    font-size: 1.4em;
+    margin-bottom: 15px;
+}
+
+.policy-section h4 {
+    color: #a00000;
+    font-size: 1.1em;
+    margin: 15px 0 10px 0;
+}
+
+.policy-section p {
+    color: #333;
+    margin: 10px 0;
+    text-align: justify;
+}
+
+.policy-section ul {
+    margin: 15px 0;
+    padding-right: 30px;
+}
+
+.policy-section li {
+    color: #444;
+    margin: 8px 0;
+    line-height: 1.7;
+}
+
+.policy-section a {
+    color: #7e0000;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.policy-section a:hover {
+    text-decoration: underline;
+}
+
+.policy-section strong {
+    color: #7e0000;
 }
 
 /* Responsive Design for Contact Page */
