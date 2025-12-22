@@ -4820,6 +4820,32 @@ footer p {
     color: #7e0000;
 }
 
+/* Page Intro Sections */
+.intro-section,
+.page-intro {
+    background: rgba(255, 255, 255, 0.98);
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-right: 5px solid #7e0000;
+}
+
+.intro-section h2 {
+    color: #7e0000;
+    font-size: 1.8em;
+    margin-bottom: 15px;
+}
+
+.intro-content p,
+.page-intro p {
+    color: #333;
+    font-size: 1.1em;
+    line-height: 1.8;
+    margin: 12px 0;
+    text-align: justify;
+}
+
 /* Responsive Design for Contact Page */
 @media (max-width: 768px) {
     .contact-cards {
