@@ -5,14 +5,44 @@ const CONFIG_URL = 'https://youth-scores-data.vercel.app/api/config';
 let mainData = null;
 let allMatches = [];
 
+// Helper function to show modal as popup
+function showModal(modal) {
+    modal.style.display = 'block';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.right = '0';
+    modal.style.bottom = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    modal.style.zIndex = '9999';
+    modal.style.overflow = 'auto';
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
+}
+
+// Helper function to hide modal
+function hideModal(modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = ''; // Restore body scroll
+}
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        // Hide all modals on page load
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+        
         await loadMainData();
         
         // Only run functions if their containers exist on the current page
         if (document.getElementById('today-matches-container')) {
             await loadRandomMatchesForHome();
+        }
+        if (document.getElementById('home-news-container')) {
+            displayHomeNews();
         }
         if (document.getElementById('seasons-container')) {
             displayCompetitions();
@@ -739,12 +769,13 @@ function showMatchDetails(match) {
         ` : ''}
     `;
     
-    modal.style.display = 'block';
+    showModal(modal);
 }
 
 // Close modal
 function closeModal() {
-    document.getElementById('match-modal').style.display = 'none';
+    const modal = document.getElementById('match-modal');
+    hideModal(modal);
 }
 
 // Close modal when clicking outside
@@ -885,6 +916,61 @@ function displayNews() {
     });
 }
 
+// Display latest news on home page (limit to 3)
+function displayHomeNews() {
+    const container = document.getElementById('home-news-container');
+    
+    if (!mainData || !mainData.news || mainData.news.length === 0) {
+        container.innerHTML = '<div class="no-data">لا توجد أخبار متاحة</div>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    // Sort news by date (newest first) and take only 1
+    const latestNews = [...mainData.news]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 1);
+    
+    latestNews.forEach(newsItem => {
+        const card = document.createElement('div');
+        card.className = 'news-card';
+        
+        let contentHTML = '';
+        
+        // Only add image if it exists and is not null/empty
+        if (newsItem.image && newsItem.image.trim() !== '') {
+            contentHTML += `
+                <div class="news-image-container" onclick="openImageModal('${newsItem.image}')">
+                    <img src="${newsItem.image}" class="news-image" alt="${newsItem.title || 'خبر'}">
+                </div>
+            `;
+        }
+        
+        contentHTML += '<div class="news-content">';
+        
+        // Only add date if it exists
+        if (newsItem.date) {
+            contentHTML += `<div class="news-date">📅 ${formatArabicDate(new Date(newsItem.date))}</div>`;
+        }
+        
+        // Only add title if it exists
+        if (newsItem.title) {
+            contentHTML += `<h3 class="news-title">${newsItem.title}</h3>`;
+        }
+        
+        // Only add details if they exist
+        if (newsItem.details) {
+            contentHTML += `<div class="news-details">${newsItem.details}</div>`;
+        }
+        
+        contentHTML += '</div>';
+        
+        card.innerHTML = contentHTML;
+        container.appendChild(card);
+    });
+}
+
 // Open image in modal
 function openImageModal(imageUrl) {
     const modal = document.getElementById('match-modal');
@@ -896,7 +982,7 @@ function openImageModal(imageUrl) {
         </div>
     `;
     
-    modal.style.display = 'block';
+    showModal(modal);
 }
 
 // Toggle season selector on mobile
@@ -1078,12 +1164,13 @@ function showAgeSelectionModal(seasonName, competitionIndex) {
         ageOptions.appendChild(btn);
     });
     
-    modal.style.display = 'block';
+    showModal(modal);
 }
 
 // Close age modal
 function closeAgeModal() {
-    document.getElementById('age-modal').style.display = 'none';
+    const modal = document.getElementById('age-modal');
+    hideModal(modal);
 }
 
 // Show sector selection modal
@@ -1106,12 +1193,13 @@ function showSectorSelectionModal(competition, ageData, seasonName) {
         sectorOptions.appendChild(btn);
     });
     
-    modal.style.display = 'block';
+    showModal(modal);
 }
 
 // Close sector modal
 function closeSectorModal() {
-    document.getElementById('sector-modal').style.display = 'none';
+    const modal = document.getElementById('sector-modal');
+    hideModal(modal);
 }
 
 // Load competition matches
@@ -1643,13 +1731,13 @@ window.onclick = function(event) {
     const sectorModal = document.getElementById('sector-modal');
     
     if (event.target === matchModal) {
-        matchModal.style.display = 'none';
+        hideModal(matchModal);
     }
     if (event.target === ageModal) {
-        ageModal.style.display = 'none';
+        hideModal(ageModal);
     }
     if (event.target === sectorModal) {
-        sectorModal.style.display = 'none';
+        hideModal(sectorModal);
     }
 }
 
@@ -2661,8 +2749,8 @@ function showTeamDetails(teamId) {
         t.team_id === teamId || t.teamId === teamId || t.id === teamId
     );
     
-    // Set title
-    titleElement.textContent = teamInfo.name;
+    // Set title - empty to hide it beside back button
+    titleElement.textContent = '';
     
     // Display team header
     headerContainer.innerHTML = `
