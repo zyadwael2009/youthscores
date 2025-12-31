@@ -1096,11 +1096,22 @@ h3 {
     }
     
     /* Team Cards and Names */
+    .teams-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .team-card {
+        padding: 20px;
+        min-width: 0; /* Allow proper text wrapping */
+    }
+    
     .team-card h3 {
         font-size: 1em;
         word-wrap: break-word;
         overflow-wrap: break-word;
         line-height: 1.4;
+        white-space: normal;
     }
     
     /* News and Other Cards */
@@ -1176,6 +1187,13 @@ h3 {
         word-wrap: break-word;
         overflow-wrap: break-word;
         line-height: 1.3;
+        white-space: normal;
+        max-width: 100%;
+    }
+    
+    .team-card-logo {
+        width: 80px;
+        height: 80px;
     }
 }
 footer {
