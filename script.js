@@ -2600,7 +2600,9 @@ function displayTeams() {
             );
             const teamInfo = matchWithTeam ? getTeamInfo(matchWithTeam, teamId) : { name: 'فريق غير معروف', logo: null };
             return { ...teamInfo, teamId };
-        }).sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+        })
+        .filter(team => team.name !== 'فريق غير معروف') // Filter out unknown teams
+        .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
         
         if (teams.length > 0) {
             if (hasGroups) {
