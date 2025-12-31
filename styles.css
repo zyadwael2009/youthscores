@@ -943,6 +943,174 @@ h3 {
         min-width: 800px; /* Force table to be wider than the screen */
         font-size: 0.9em;
     }
+    
+    .standings-table .team-name {
+        font-size: 0.85em;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.3;
+    }
+    
+    .standings-table .team-logo {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .standings-table th,
+    .standings-table td {
+        padding: 10px 6px;
+        font-size: 0.85em;
+    }
+    
+    /* Match Cards Mobile Styles */
+    .match-card {
+        padding: 10px 12px;
+    }
+    
+    /* Team Names - Handle Long Names */
+    .match-teams-with-logos {
+        gap: 5px;
+    }
+    
+    .team-side {
+        gap: 6px;
+        min-width: 0; /* Allow flex items to shrink */
+    }
+    
+    .team-side .team-name {
+        font-size: 0.85em;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.3;
+        max-width: 100%;
+    }
+    
+    .team-logo {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .match-center {
+        min-width: 60px;
+        flex-shrink: 0;
+    }
+    
+    .score-display {
+        font-size: 1.2em;
+    }
+    
+    .match-time-display {
+        font-size: 0.9em;
+    }
+    
+    /* Competition Header Mobile */
+    .today-matches-competition-header {
+        padding: 12px 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .today-matches-competition-header .competition-name {
+        font-size: 1em;
+        word-wrap: break-word;
+        max-width: 100%;
+    }
+    
+    .today-matches-competition-header .competition-age {
+        font-size: 0.85em;
+        padding: 4px 12px;
+    }
+    
+    .match-competition-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .match-competition-header .competition-name {
+        font-size: 0.85em;
+        word-wrap: break-word;
+    }
+    
+    .match-venue {
+        font-size: 0.75em;
+    }
+    
+    .match-note {
+        font-size: 0.75em;
+    }
+    
+    .match-below-score {
+        font-size: 0.85em;
+    }
+    
+    /* Modal Mobile Styles */
+    .modal-team-name {
+        font-size: 0.9em;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.3;
+    }
+    
+    .modal-team-logo {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .modal-score-numbers {
+        font-size: 1.8em;
+    }
+    
+    /* Stats Lists Mobile */
+    .stats-player-name {
+        font-size: 0.95em;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .stats-team-name {
+        font-size: 0.8em;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .stats-value {
+        font-size: 1.2em;
+        min-width: 50px;
+    }
+    
+    .stats-item {
+        padding: 15px 12px;
+    }
+    
+    /* Competition Header Mobile */
+    .competition-header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    #competition-title {
+        font-size: 1.3em;
+        word-wrap: break-word;
+        text-align: center;
+    }
+    
+    /* Team Cards and Names */
+    .team-card h3 {
+        font-size: 1em;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+    }
+    
+    /* News and Other Cards */
+    .news-card h3,
+    .venue-card h3 {
+        font-size: 1.1em;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+    }
 }
 footer {
     background: rgba(255, 255, 255, 0.95);
