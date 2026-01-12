@@ -1886,7 +1886,12 @@ function displayStandings() {
 function calculateStandings(teamIds, teamIdToGroupMap) {
     const standings = {};
     
-    // Initialize standings for each team
+    // Get the group for this standings calculation
+    const standingsGroup = teamIdToGroupMap && teamIds.length > 0 
+        ? teamIdToGroupMap[teamIds[0]] 
+        : null;
+    
+    // Initialize standings for each team in this group
     teamIds.forEach(teamId => {
         standings[teamId] = {
             teamId: teamId,
@@ -1897,51 +1902,76 @@ function calculateStandings(teamIds, teamIdToGroupMap) {
             goalsFor: 0,
             goalsAgainst: 0,
             goalDiff: 0,
-            points: 0
+            points: 0,
+            penaltyPoints: 0
         };
     });
     
-    // Calculate stats from matches - only count matches where BOTH teams are in the same group
+    // Process ALL matches - for each match, check if any team from our standings group is involved
     allMatches.forEach(match => {
         if (match.status !== 'completed') return;
         
+        // Ignore knockout matches for standings
+        if (match.stage && match.stage.toLowerCase() === 'knockout') return;
+        
         const homeId = match.home_team_id;
         const awayId = match.away_team_id;
-        
-        // Only count this match if BOTH teams are in this standings group
-        if (!standings[homeId] || !standings[awayId]) return;
-        
-        // Additionally, check if both teams are from the same team.group
-        if (teamIdToGroupMap) {
-            const homeTeamGroup = teamIdToGroupMap[homeId];
-            const awayTeamGroup = teamIdToGroupMap[awayId];
-            // If groups are different, don't count this match for standings
-            if (homeTeamGroup !== awayTeamGroup) return;
-        }
-        
         const homeScore = match.home_score || 0;
         const awayScore = match.away_score || 0;
+        const penaltyWinnerId = match.penalty_winner_team_id || null;
         
-        standings[homeId].played++;
-        standings[awayId].played++;
-        standings[homeId].goalsFor += homeScore;
-        standings[homeId].goalsAgainst += awayScore;
-        standings[awayId].goalsFor += awayScore;
-        standings[awayId].goalsAgainst += homeScore;
+        const homeInGroup = standings[homeId] !== undefined;
+        const awayInGroup = standings[awayId] !== undefined;
         
-        if (homeScore > awayScore) {
-            standings[homeId].won++;
-            standings[homeId].points += 3;
-            standings[awayId].lost++;
-        } else if (awayScore > homeScore) {
-            standings[awayId].won++;
-            standings[awayId].points += 3;
-            standings[homeId].lost++;
-        } else {
-            standings[homeId].drawn++;
-            standings[awayId].drawn++;
-            standings[homeId].points++;
-            standings[awayId].points++;
+        // Only process if at least one team is in our standings group
+        if (!homeInGroup && !awayInGroup) return;
+        
+        // Process home team stats if in group
+        if (homeInGroup) {
+            standings[homeId].played++;
+            standings[homeId].goalsFor += homeScore;
+            standings[homeId].goalsAgainst += awayScore;
+            
+            if (homeScore > awayScore) {
+                standings[homeId].won++;
+                standings[homeId].points += 3;
+            } else if (awayScore > homeScore) {
+                standings[homeId].lost++;
+            } else {
+                // Draw
+                standings[homeId].drawn++;
+                standings[homeId].points++;
+                
+                // Penalty shootout bonus point
+                if (penaltyWinnerId === homeId) {
+                    standings[homeId].points++;
+                    standings[homeId].penaltyPoints++;
+                }
+            }
+        }
+        
+        // Process away team stats if in group
+        if (awayInGroup) {
+            standings[awayId].played++;
+            standings[awayId].goalsFor += awayScore;
+            standings[awayId].goalsAgainst += homeScore;
+            
+            if (awayScore > homeScore) {
+                standings[awayId].won++;
+                standings[awayId].points += 3;
+            } else if (homeScore > awayScore) {
+                standings[awayId].lost++;
+            } else {
+                // Draw
+                standings[awayId].drawn++;
+                standings[awayId].points++;
+                
+                // Penalty shootout bonus point
+                if (penaltyWinnerId === awayId) {
+                    standings[awayId].points++;
+                    standings[awayId].penaltyPoints++;
+                }
+            }
         }
     });
     
@@ -1950,15 +1980,18 @@ function calculateStandings(teamIds, teamIdToGroupMap) {
         team.goalDiff = team.goalsFor - team.goalsAgainst;
     });
     
+    // Get teams data for alphabetical sorting
+    const teamsData = allMatches.length > 0 && allMatches[0].teams ? allMatches[0].teams : [];
+    
     // Sort with head-to-head tiebreaker
     return Object.values(standings).sort((a, b) => {
         // 1. Compare by points
         if (b.points !== a.points) return b.points - a.points;
         
-        // 2. Head-to-head tiebreaker (if same points)
+        // 2. Head-to-head tiebreaker (only if 2+ matches played between teams)
         if (a.points === b.points && a.points > 0) {
-            const h2hResult = getHeadToHeadResult(a.teamId, b.teamId);
-            if (h2hResult !== 0) return -h2hResult; // Negate because positive means a is better
+            const h2hResult = getHeadToHeadResult(a.teamId, b.teamId, teamsData);
+            if (h2hResult !== 0) return h2hResult;
         }
         
         // 3. Compare by goal difference
@@ -1967,18 +2000,35 @@ function calculateStandings(teamIds, teamIdToGroupMap) {
         // 4. Compare by goals scored
         if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
         
-        return 0;
+        // 5. Alphabetical by team name
+        const teamAInfo = getTeamInfoById(a.teamId, teamsData);
+        const teamBInfo = getTeamInfoById(b.teamId, teamsData);
+        const teamAName = teamAInfo ? (teamAInfo.name || teamAInfo.teamName || '') : '';
+        const teamBName = teamBInfo ? (teamBInfo.name || teamBInfo.teamName || '') : '';
+        return teamAName.localeCompare(teamBName, 'ar');
     });
 }
 
-// Get head-to-head result between two teams
-function getHeadToHeadResult(teamA, teamB) {
+// Helper function to get team info by ID
+function getTeamInfoById(teamId, teamsData) {
+    if (!teamsData || !Array.isArray(teamsData)) return null;
+    return teamsData.find(team => team.team_id === teamId);
+}
+
+// Get head-to-head result between two teams (only applied if 2+ matches played)
+function getHeadToHeadResult(teamA, teamB, teamsData) {
     let teamAPoints = 0;
     let teamBPoints = 0;
+    let teamAGoalsFor = 0;
+    let teamAGoalsAgainst = 0;
+    let h2hMatchesPlayed = 0;
     
     // Find all matches between these two teams
     allMatches.forEach(match => {
         if (match.status !== 'completed') return;
+        
+        // Ignore knockout matches in head-to-head
+        if (match.stage && match.stage.toLowerCase() === 'knockout') return;
         
         const isMatchBetweenTeams = 
             (match.home_team_id === teamA && match.away_team_id === teamB) ||
@@ -1986,23 +2036,57 @@ function getHeadToHeadResult(teamA, teamB) {
         
         if (!isMatchBetweenTeams) return;
         
+        h2hMatchesPlayed++;
+        
         const homeScore = match.home_score || 0;
         const awayScore = match.away_score || 0;
         
         if (match.home_team_id === teamA) {
-            if (homeScore > awayScore) teamAPoints += 3;
-            else if (homeScore === awayScore) { teamAPoints += 1; teamBPoints += 1; }
-            else teamBPoints += 3;
+            teamAGoalsFor += homeScore;
+            teamAGoalsAgainst += awayScore;
+            
+            if (homeScore > awayScore) {
+                teamAPoints += 3;
+            } else if (homeScore === awayScore) {
+                teamAPoints += 1;
+                teamBPoints += 1;
+            } else {
+                teamBPoints += 3;
+            }
         } else {
-            if (homeScore > awayScore) teamBPoints += 3;
-            else if (homeScore === awayScore) { teamAPoints += 1; teamBPoints += 1; }
-            else teamAPoints += 3;
+            teamAGoalsFor += awayScore;
+            teamAGoalsAgainst += homeScore;
+            
+            if (awayScore > homeScore) {
+                teamAPoints += 3;
+            } else if (homeScore === awayScore) {
+                teamAPoints += 1;
+                teamBPoints += 1;
+            } else {
+                teamBPoints += 3;
+            }
         }
     });
     
-    // Return negative if teamA should be ranked lower (teamB has more points)
-    // Return positive if teamA should be ranked higher (teamA has more points)
-    return teamAPoints - teamBPoints;
+    // Only apply head-to-head if 2 or more matches played
+    if (h2hMatchesPlayed < 2) {
+        return 0;
+    }
+    
+    // Compare H2H points
+    if (teamBPoints !== teamAPoints) {
+        return teamBPoints - teamAPoints;
+    }
+    
+    // Compare H2H goal difference
+    const teamAGD = teamAGoalsFor - teamAGoalsAgainst;
+    const teamBGD = -teamAGD; // Reverse for teamB
+    if (teamBGD !== teamAGD) {
+        return teamBGD - teamAGD;
+    }
+    
+    // If H2H is tied, return 0 to move to next tiebreaker
+    return 0;
 }
 
 function createStandingsTable(standings, teamsData) {
@@ -2758,26 +2842,12 @@ function showTeamDetails(teamId) {
             ${teamInfo.logo ? `<img src="${teamInfo.logo}" class="team-details-logo" alt="${teamInfo.name}">` : ''}
             <div class="team-details-info">
                 <h1>${teamInfo.name}</h1>
-                ${teamData && teamData.city ? `<p class="team-city">📍 ${teamData.city}</p>` : ''}
             </div>
         </div>
     `;
     
-    // Display team info
-    let infoHtml = '<div class="team-info-section">';
-    if (teamData) {
-        if (teamData.field) {
-            infoHtml += `<div class="info-item"><strong>الملعب:</strong> ${teamData.field}</div>`;
-        }
-        if (teamData.city) {
-            infoHtml += `<div class="info-item"><strong>المدينة:</strong> ${teamData.city}</div>`;
-        }
-        if (teamData.group) {
-            infoHtml += `<div class="info-item"><strong>المجموعة:</strong> ${teamData.group}</div>`;
-        }
-    }
-    infoHtml += '</div>';
-    infoContainer.innerHTML = infoHtml;
+    // Display team info in collapsible section
+    displayTeamInfo(teamData, infoContainer);
     
     // Set current team ID for statistics
     currentTeamId = teamId;
@@ -2796,6 +2866,61 @@ function showTeamDetails(teamId) {
     
     // Show page
     showPage('team-details');
+}
+
+function displayTeamInfo(teamData, container) {
+    if (!teamData) {
+        container.innerHTML = '<div class="no-data">لا توجد معلومات عن الفريق</div>';
+        return;
+    }
+    
+    let infoHtml = '<div class="team-info-list">';
+    
+    // City
+    if (teamData.city) {
+        infoHtml += `
+            <div class="info-row">
+                <div class="info-label">📍 المدينة</div>
+                <div class="info-value">${teamData.city}</div>
+            </div>
+        `;
+    }
+    
+    // Field (with optional link)
+    if (teamData.field) {
+        const fieldValue = teamData.fieldurl 
+            ? `<a href="${teamData.fieldurl}" target="_blank" class="field-link">${teamData.field}</a>`
+            : teamData.field;
+        infoHtml += `
+            <div class="info-row">
+                <div class="info-label">🏟️ الملعب</div>
+                <div class="info-value">${fieldValue}</div>
+            </div>
+        `;
+    }
+    
+    // Information
+    if (teamData.information) {
+        infoHtml += `
+            <div class="info-row">
+                <div class="info-label">ℹ️ معلومات</div>
+                <div class="info-value">${teamData.information}</div>
+            </div>
+        `;
+    }
+    
+    // Group (if exists)
+    if (teamData.group) {
+        infoHtml += `
+            <div class="info-row">
+                <div class="info-label">📋 المجموعة</div>
+                <div class="info-value">${teamData.group}</div>
+            </div>
+        `;
+    }
+    
+    infoHtml += '</div>';
+    container.innerHTML = infoHtml;
 }
 
 function displayTeamPlayers(teamData, container) {
