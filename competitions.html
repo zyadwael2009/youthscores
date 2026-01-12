@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="تصفح جميع بطولات كرة القدم للناشئين في مصر. جداول المباريات، النتائج، الترتيب، الإحصائيات الكاملة لجميع البطولات والمسابقات">
+    <meta name="keywords" content="دوري الجمهورية, دوري منطقة القاهرة, دوري منطقة الإسكندرية, كأس مصر, بطولة منطقة الجيزة, بطولة منطقة القليوبية, دوري الناشئين, جدول الترتيب, نتائج المباريات, مواليد 2013, مواليد 2012, مواليد 2011, مواليد 2010, مواليد 2009, مواليد 2008, مواليد 2007, مواليد 2006, تحت 13 سنة, تحت 15 سنة, تحت 17 سنة, تحت 19 سنة, تحت 21 سنة">
     <title>البطولات - Youth Scores</title>
     <link rel="icon" href="icon.png" type="image/x-icon">
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com">
     <link rel="stylesheet" href="styles.css">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3270638067426236"
      crossorigin="anonymous"></script>
@@ -12,7 +15,7 @@
 <body>
     <header>
         <div class="container">
-            <h1><img src="icon.png" alt="Youth Scores" class="header-logo"> Youth Scores</h1>
+            <h1><img src="icon.png" alt="Youth Scores" class="header-logo" width="60" height="60"> Youth Scores</h1>
             <p class="subtitle">بطولات الناشئين</p>
         </div>
     </header>
@@ -135,7 +138,17 @@
                 <h2 id="team-title"></h2>
             </div>
             <div id="team-header-container"></div>
-            <div id="team-info-container"></div>
+            
+            <!-- Team Information Section -->
+            <div class="collapsible-section">
+                <div class="collapsible-header" onclick="toggleSection('team-info-section')">
+                    <h3>ℹ️ معلومات الفريق</h3>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div id="team-info-section" class="collapsible-content">
+                    <div id="team-info-container"></div>
+                </div>
+            </div>
             
             <!-- Team Matches Section -->
             <div class="collapsible-section">
@@ -226,6 +239,6 @@
         <p>&copy; 2025 Youth Scores - جميع الحقوق محفوظة</p>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
