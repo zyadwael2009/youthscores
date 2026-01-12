@@ -5174,3 +5174,50 @@ footer p {
         font-size: 1em;
     }
 }
+
+/* Team Info List Styles */
+.team-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 20px;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
+}
+
+.info-row:hover {
+    background: #fff8f0;
+    transform: translateX(-5px);
+    box-shadow: 0 3px 10px rgba(126, 0, 0, 0.1);
+}
+
+.info-label {
+    color: #7e0000;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.info-value {
+    color: #333;
+    font-size: 1.05em;
+    line-height: 1.6;
+}
+
+.field-link {
+    color: #0066cc;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.field-link:hover {
+    color: #7e0000;
+    text-decoration: underline;
+}
