@@ -1018,6 +1018,9 @@ function toggleWeeksSidebar() {
 }
 
 // Display venues
+// Store all venues globally for filtering
+let allVenues = [];
+
 function displayVenues() {
     const container = document.getElementById('venues-container');
     
@@ -1026,10 +1029,25 @@ function displayVenues() {
         return;
     }
     
+    // Store venues globally
+    allVenues = mainData.venues;
+    
+    // Render all venues initially
+    renderVenues(allVenues);
+}
+
+function renderVenues(venues) {
+    const container = document.getElementById('venues-container');
+    
+    if (!venues || venues.length === 0) {
+        container.innerHTML = '<div class="no-data">لا توجد نتائج</div>';
+        return;
+    }
+    
     container.innerHTML = '<div class="venues-grid"></div>';
     const grid = container.querySelector('.venues-grid');
     
-    mainData.venues.forEach(venue => {
+    venues.forEach(venue => {
         const card = document.createElement('div');
         card.className = 'venue-card';
         
@@ -1042,6 +1060,24 @@ function displayVenues() {
         
         grid.appendChild(card);
     });
+}
+
+function filterVenues() {
+    const searchInput = document.getElementById('venue-search');
+    if (!searchInput) return;
+    
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    
+    if (!searchTerm) {
+        renderVenues(allVenues);
+        return;
+    }
+    
+    const filteredVenues = allVenues.filter(venue => 
+        venue.name.toLowerCase().includes(searchTerm)
+    );
+    
+    renderVenues(filteredVenues);
 }
 
 // Page navigation
@@ -2901,10 +2937,11 @@ function displayTeamInfo(teamData, container) {
     
     // Information
     if (teamData.information) {
+        const formattedInfo = teamData.information.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
         infoHtml += `
             <div class="info-row">
                 <div class="info-label">ℹ️ معلومات</div>
-                <div class="info-value">${teamData.information}</div>
+                <div class="info-value">${formattedInfo}</div>
             </div>
         `;
     }
