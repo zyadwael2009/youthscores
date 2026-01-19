@@ -604,6 +604,35 @@ h3 {
     white-space: pre-line;
 }
 
+/* Venue Search */
+.venue-search-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.venue-search-input {
+    width: 100%;
+    max-width: 600px;
+    padding: 15px 20px;
+    font-size: 1.1em;
+    border: 2px solid #ddd;
+    border-radius: 25px;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    text-align: right;
+    direction: rtl;
+}
+
+.venue-search-input:focus {
+    border-color: #7e0000;
+    box-shadow: 0 0 15px rgba(126, 0, 0, 0.2);
+}
+
+.venue-search-input::placeholder {
+    color: #999;
+}
+
 /* Venues Grid */
 .venues-grid {
     display: grid;
