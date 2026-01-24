@@ -1859,10 +1859,8 @@ function showStatsSection(section) {
 function displayStandings() {
     const container = document.getElementById('standings-container');
     
+    console.log('=== STANDINGS DEBUG START ===');
     console.log('displayStandings called - allMatches:', allMatches.length);
-    if (allMatches.length > 0) {
-        console.log('First match sample:', allMatches[0]);
-    }
     
     if (!allMatches || allMatches.length === 0) {
         container.innerHTML = '<div class="no-data">لا توجد بيانات</div>';
@@ -1872,27 +1870,35 @@ function displayStandings() {
     // Get teams data from first match (all matches should have same teams array)
     const teamsData = allMatches[0]?.teams || [];
     
+    console.log('Teams data length:', teamsData.length);
+    console.log('Full teams data:', JSON.stringify(teamsData.slice(0, 3), null, 2)); // Log first 3 teams
+    
     if (teamsData.length === 0) {
         container.innerHTML = '<div class="no-data">لا توجد بيانات الفرق</div>';
         return;
     }
     
-    // Build team ID to group map from the definitive teamsData list
+    // Build team ID to group map from the definitive teamsData list using team.group
     const teamIdToGroupMap = {};
-    teamsData.forEach(team => {
-        teamIdToGroupMap[team.team_id] = team.group || null;
-    });
     
-    // Check if any team has a group
-    const hasGroups = Object.values(teamIdToGroupMap).some(group => group && group !== 'null' && group !== '');
-    
-    // Group teams by their team.group property (البطولة, الهبوط, etc.)
+    // Group teams by their team.group property from team data
     const groups = {};
+    
     teamsData.forEach(team => {
-        const teamGroup = team.group;
-        const groupName = hasGroups && teamGroup && teamGroup !== 'null' && teamGroup !== '' 
-            ? teamGroup 
-            : 'all';
+        // Get the group value - check multiple possible field names
+        const teamGroupValue = team.group || team.Group || team.GROUP || null;
+        
+        console.log(`Team: ${team.team_id} | Name: ${team.name} | Group field value: "${teamGroupValue}" | Type: ${typeof teamGroupValue}`);
+        
+        teamIdToGroupMap[team.team_id] = teamGroupValue;
+        
+        // Determine which group bucket to use
+        let groupName;
+        if (teamGroupValue && teamGroupValue !== 'null' && teamGroupValue !== '' && teamGroupValue !== null && teamGroupValue !== undefined) {
+            groupName = teamGroupValue;
+        } else {
+            groupName = 'فرق بدون مجموعة';
+        }
         
         if (!groups[groupName]) {
             groups[groupName] = [];
@@ -1900,20 +1906,28 @@ function displayStandings() {
         groups[groupName].push(team.team_id);
     });
     
-    console.log('Standings groups:', Object.keys(groups));
+    console.log('Final groups object:', groups);
+    console.log('Group names:', Object.keys(groups));
+    console.log('=== STANDINGS DEBUG END ===');
     
     container.innerHTML = '';
     
-    Object.keys(groups).sort().forEach(groupName => {
-        const teamIds = groups[groupName]; // It's already an array
+    // Sort groups - put actual groups first, then "فرق بدون مجموعة" last
+    const sortedGroupNames = Object.keys(groups).sort((a, b) => {
+        if (a === 'فرق بدون مجموعة') return 1;
+        if (b === 'فرق بدون مجموعة') return -1;
+        return a.localeCompare(b, 'ar');
+    });
+    
+    sortedGroupNames.forEach(groupName => {
+        const teamIds = groups[groupName];
         const standings = calculateStandings(teamIds, teamIdToGroupMap);
         
-        if (hasGroups && groupName !== 'all') {
-            const groupHeader = document.createElement('h3');
-            groupHeader.textContent = groupName;
-            groupHeader.style.cssText = 'background: #7e0000; color: white; padding: 15px 20px; margin: 20px 0 10px 0; border-radius: 10px; text-align: center;';
-            container.appendChild(groupHeader);
-        }
+        // Always show group header
+        const groupHeader = document.createElement('h3');
+        groupHeader.textContent = groupName;
+        groupHeader.style.cssText = 'background: #7e0000; color: white; padding: 15px 20px; margin: 20px 0 10px 0; border-radius: 10px; text-align: center;';
+        container.appendChild(groupHeader);
         
         container.appendChild(createStandingsTable(standings, teamsData));
     });
@@ -2279,53 +2293,24 @@ function displayComprehensiveAnalysis(container) {
 function smartGroupCompletedMatches() {
     const matchesByBucket = {};
     
-    // Build team ID to group map from teams data
-    const teamIdToGroupMap = {};
-    allMatches.forEach(match => {
-        // Get the actual team's group property from the team object
-        const homeTeam = getTeamInfo(match, match.home_team_id);
-        const awayTeam = getTeamInfo(match, match.away_team_id);
-        
-        // Store each team's actual group (from team data, not match data)
-        if (!teamIdToGroupMap[match.home_team_id]) {
-            teamIdToGroupMap[match.home_team_id] = homeTeam.group || null;
-        }
-        if (!teamIdToGroupMap[match.away_team_id]) {
-            teamIdToGroupMap[match.away_team_id] = awayTeam.group || null;
-        }
-    });
-    
-    console.log('Team groups map:', teamIdToGroupMap);
-    
-    // Group matches based on team groups ONLY
+    // Group matches based on match.group property (from match data, not team data)
     allMatches.forEach(match => {
         if (match.status !== 'completed') return;
         
-        const homeTeamGroup = teamIdToGroupMap[match.home_team_id];
-        const awayTeamGroup = teamIdToGroupMap[match.away_team_id];
+        // Use match.group directly (from match data)
+        const matchGroup = match.group;
         
-        console.log(`Match: ${match.home_team_id} (${homeTeamGroup}) vs ${match.away_team_id} (${awayTeamGroup})`);
+        console.log(`Match: ${match.home_team_id} vs ${match.away_team_id}, group: ${matchGroup}`);
         
         let bucketKey;
         
-        // If both teams are from the same group, use that group name directly
-        // (e.g., both from "البطولة" → bucket = "البطولة")
-        if (homeTeamGroup && awayTeamGroup && homeTeamGroup === awayTeamGroup && 
-            homeTeamGroup !== '' && homeTeamGroup !== 'null') {
-            bucketKey = homeTeamGroup;  // Use team group directly: "البطولة" or "الهبوط"
+        // If match has a group, use it directly
+        if (matchGroup && matchGroup !== '' && matchGroup !== 'null') {
+            bucketKey = matchGroup;  // Use match group directly: "الاوائل", "تحديد المراكز من 8 الي 21", etc.
         }
-        // If teams are from different groups, this is المرحلة الاولي
-        else if (homeTeamGroup && awayTeamGroup && homeTeamGroup !== awayTeamGroup && 
-                 homeTeamGroup !== '' && homeTeamGroup !== 'null' && 
-                 awayTeamGroup !== '' && awayTeamGroup !== 'null') {
-            bucketKey = 'المرحلة الاولي';
-        }
-        // If only one team has a group, use it
-        else if (homeTeamGroup && homeTeamGroup !== '' && homeTeamGroup !== 'null') {
-            bucketKey = homeTeamGroup;
-        }
-        else if (awayTeamGroup && awayTeamGroup !== '' && awayTeamGroup !== 'null') {
-            bucketKey = awayTeamGroup;
+        // If match has a sector instead
+        else if (match.sector && match.sector !== '' && match.sector !== 'null') {
+            bucketKey = match.sector;
         }
         // No groups at all
         else {
@@ -2461,79 +2446,91 @@ function findBestTeams(teamStats, statType, matches) {
 function displayScorers(container) {
     console.log('Processing scorers from', allMatches.length, 'matches');
     
-    // Check if competition has groups
-    const hasGroups = allMatches.some(match => match.group || match.sector);
+    // Get teams data to build team group map
+    const teamsData = allMatches[0]?.teams || [];
+    const teamIdToGroupMap = {};
+    teamsData.forEach(team => {
+        teamIdToGroupMap[team.team_id] = team.group || null;
+    });
     
-    // Group matches by sector/group
-    const groups = {};
+    // Check if any team has a group
+    const hasGroups = Object.values(teamIdToGroupMap).some(group => group && group !== 'null' && group !== '');
+    
+    // Collect all scorers from all matches
+    const allScorers = {};
+    let totalMatchesWithScorers = 0;
+    
     allMatches.forEach(match => {
-        const group = hasGroups 
-            ? (match.group ? `المجموعة ${match.group}` : (match.sector || 'بدون مجموعة'))
-            : 'all';
-        if (!groups[group]) {
-            groups[group] = [];
+        if (match.home_scorers || match.away_scorers) {
+            totalMatchesWithScorers++;
         }
-        groups[group].push(match);
+        if (match.status !== 'completed') return;
+        
+        // Process home scorers
+        if (match.home_scorers && Array.isArray(match.home_scorers)) {
+            const assistMarker = 'صناعة الاهداف';
+            const assistIndex = match.home_scorers.findIndex(item => item === assistMarker);
+            const goals = assistIndex === -1 ? match.home_scorers : match.home_scorers.slice(0, assistIndex);
+            
+            goals.forEach(scorer => {
+                if (!scorer || scorer === 'لا يوجد بيانات') return;
+                const parsed = parsePlayerEvent(scorer);
+                const key = `${parsed.name}_${match.home_team_id}`;
+                if (!allScorers[key]) {
+                    allScorers[key] = {
+                        name: parsed.name,
+                        teamId: match.home_team_id,
+                        goals: 0
+                    };
+                }
+                allScorers[key].goals += parsed.count;
+            });
+        }
+        
+        // Process away scorers
+        if (match.away_scorers && Array.isArray(match.away_scorers)) {
+            const assistMarker = 'صناعة الاهداف';
+            const assistIndex = match.away_scorers.findIndex(item => item === assistMarker);
+            const goals = assistIndex === -1 ? match.away_scorers : match.away_scorers.slice(0, assistIndex);
+            
+            goals.forEach(scorer => {
+                if (!scorer || scorer === 'لا يوجد بيانات') return;
+                const parsed = parsePlayerEvent(scorer);
+                const key = `${parsed.name}_${match.away_team_id}`;
+                if (!allScorers[key]) {
+                    allScorers[key] = {
+                        name: parsed.name,
+                        teamId: match.away_team_id,
+                        goals: 0
+                    };
+                }
+                allScorers[key].goals += parsed.count;
+            });
+        }
+    });
+    
+    // Group scorers by team.group
+    const groups = {};
+    Object.values(allScorers).forEach(scorer => {
+        const teamGroup = teamIdToGroupMap[scorer.teamId];
+        const groupName = (teamGroup && teamGroup !== 'null' && teamGroup !== '') ? teamGroup : 'فرق بدون مجموعة';
+        if (!groups[groupName]) {
+            groups[groupName] = [];
+        }
+        groups[groupName].push(scorer);
     });
     
     let html = '';
-    let totalMatchesWithScorers = 0;
     
-    // Process each group separately
-    Object.keys(groups).sort().forEach(groupName => {
-        const scorers = {};
-        const groupMatches = groups[groupName];
-        
-        groupMatches.forEach(match => {
-            if (match.home_scorers || match.away_scorers) {
-                totalMatchesWithScorers++;
-            }
-            if (match.status !== 'completed') return;
-            
-            // Process home scorers
-            if (match.home_scorers && Array.isArray(match.home_scorers)) {
-                const assistMarker = 'صناعة الاهداف';
-                const assistIndex = match.home_scorers.findIndex(item => item === assistMarker);
-                const goals = assistIndex === -1 ? match.home_scorers : match.home_scorers.slice(0, assistIndex);
-                
-                goals.forEach(scorer => {
-                    if (!scorer || scorer === 'لا يوجد بيانات') return;
-                    const parsed = parsePlayerEvent(scorer);
-                    const key = `${parsed.name}_${match.home_team_id}`;
-                    if (!scorers[key]) {
-                        scorers[key] = {
-                            name: parsed.name,
-                            teamId: match.home_team_id,
-                            goals: 0
-                        };
-                    }
-                    scorers[key].goals += parsed.count;
-                });
-            }
-            
-            // Process away scorers
-            if (match.away_scorers && Array.isArray(match.away_scorers)) {
-                const assistMarker = 'صناعة الاهداف';
-                const assistIndex = match.away_scorers.findIndex(item => item === assistMarker);
-                const goals = assistIndex === -1 ? match.away_scorers : match.away_scorers.slice(0, assistIndex);
-                
-                goals.forEach(scorer => {
-                    if (!scorer || scorer === 'لا يوجد بيانات') return;
-                    const parsed = parsePlayerEvent(scorer);
-                    const key = `${parsed.name}_${match.away_team_id}`;
-                    if (!scorers[key]) {
-                        scorers[key] = {
-                            name: parsed.name,
-                            teamId: match.away_team_id,
-                            goals: 0
-                        };
-                    }
-                    scorers[key].goals += parsed.count;
-                });
-            }
-        });
-        
-        const sortedScorers = Object.values(scorers)
+    // Sort groups
+    const sortedGroupNames = Object.keys(groups).sort((a, b) => {
+        if (a === 'فرق بدون مجموعة') return 1;
+        if (b === 'فرق بدون مجموعة') return -1;
+        return a.localeCompare(b, 'ar');
+    });
+    
+    sortedGroupNames.forEach(groupName => {
+        const sortedScorers = groups[groupName]
             .filter(s => s.goals > 0)
             .sort((a, b) => b.goals - a.goals);
         
@@ -2557,85 +2554,97 @@ function displayScorers(container) {
 function displayAssists(container) {
     console.log('displayAssists - Processing assists from', allMatches.length, 'matches');
     
-    // Check if competition has groups
-    const hasGroups = allMatches.some(match => match.group || match.sector);
+    // Get teams data to build team group map
+    const teamsData = allMatches[0]?.teams || [];
+    const teamIdToGroupMap = {};
+    teamsData.forEach(team => {
+        teamIdToGroupMap[team.team_id] = team.group || null;
+    });
     
-    // Group matches by sector/group
-    const groups = {};
+    // Check if any team has a group
+    const hasGroups = Object.values(teamIdToGroupMap).some(group => group && group !== 'null' && group !== '');
+    
+    // Collect all assisters from all matches
+    const allAssisters = {};
+    let totalMatchesWithAssists = 0;
+    
     allMatches.forEach(match => {
-        const group = hasGroups 
-            ? (match.group ? `المجموعة ${match.group}` : (match.sector || 'بدون مجموعة'))
-            : 'all';
-        if (!groups[group]) {
-            groups[group] = [];
+        if (match.status !== 'completed') return;
+        
+        // Process home assists
+        if (match.home_scorers && Array.isArray(match.home_scorers)) {
+            const assistMarker = 'صناعة الاهداف';
+            const assistIndex = match.home_scorers.findIndex(item => item === assistMarker);
+            
+            if (assistIndex !== -1 && assistIndex < match.home_scorers.length - 1) {
+                const assists = match.home_scorers.slice(assistIndex + 1);
+                totalMatchesWithAssists++;
+                
+                assists.forEach(assister => {
+                    if (!assister || assister === 'لا يوجد بيانات' || assister.trim() === '') return;
+                    
+                    const parsed = parsePlayerEvent(assister);
+                    const key = `${parsed.name}_${match.home_team_id}`;
+                    if (!allAssisters[key]) {
+                        allAssisters[key] = {
+                            name: parsed.name,
+                            teamId: match.home_team_id,
+                            assists: 0
+                        };
+                    }
+                    allAssisters[key].assists += parsed.count;
+                });
+            }
         }
-        groups[group].push(match);
+        
+        // Process away assists
+        if (match.away_scorers && Array.isArray(match.away_scorers)) {
+            const assistMarker = 'صناعة الاهداف';
+            const assistIndex = match.away_scorers.findIndex(item => item === assistMarker);
+            
+            if (assistIndex !== -1 && assistIndex < match.away_scorers.length - 1) {
+                const assists = match.away_scorers.slice(assistIndex + 1);
+                
+                assists.forEach(assister => {
+                    if (!assister || assister === 'لا يوجد بيانات' || assister.trim() === '') return;
+                    
+                    const parsed = parsePlayerEvent(assister);
+                    const key = `${parsed.name}_${match.away_team_id}`;
+                    if (!allAssisters[key]) {
+                        allAssisters[key] = {
+                            name: parsed.name,
+                            teamId: match.away_team_id,
+                            assists: 0
+                        };
+                    }
+                    allAssisters[key].assists += parsed.count;
+                });
+            }
+        }
+    });
+    
+    // Group assisters by team.group
+    const groups = {};
+    Object.values(allAssisters).forEach(assister => {
+        const teamGroup = teamIdToGroupMap[assister.teamId];
+        const groupName = (teamGroup && teamGroup !== 'null' && teamGroup !== '') ? teamGroup : 'فرق بدون مجموعة';
+        if (!groups[groupName]) {
+            groups[groupName] = [];
+        }
+        groups[groupName].push(assister);
     });
     
     let html = '';
-    let totalMatchesWithAssists = 0;
     
-    // Process each group separately
-    Object.keys(groups).sort().forEach(groupName => {
-        const assisters = {};
-        const groupMatches = groups[groupName];
-        
-        groupMatches.forEach(match => {
-            if (match.status !== 'completed') return;
-            
-            // Process home assists
-            if (match.home_scorers && Array.isArray(match.home_scorers)) {
-                const assistMarker = 'صناعة الاهداف';
-                const assistIndex = match.home_scorers.findIndex(item => item === assistMarker);
-                
-                if (assistIndex !== -1 && assistIndex < match.home_scorers.length - 1) {
-                    const assists = match.home_scorers.slice(assistIndex + 1);
-                    totalMatchesWithAssists++;
-                    
-                    assists.forEach(assister => {
-                        if (!assister || assister === 'لا يوجد بيانات' || assister.trim() === '') return;
-                        
-                        const parsed = parsePlayerEvent(assister);
-                        const key = `${parsed.name}_${match.home_team_id}`;
-                        if (!assisters[key]) {
-                            assisters[key] = {
-                                name: parsed.name,
-                                teamId: match.home_team_id,
-                                assists: 0
-                            };
-                        }
-                        assisters[key].assists += parsed.count;
-                    });
-                }
-            }
-            
-            // Process away assists
-            if (match.away_scorers && Array.isArray(match.away_scorers)) {
-                const assistMarker = 'صناعة الاهداف';
-                const assistIndex = match.away_scorers.findIndex(item => item === assistMarker);
-                
-                if (assistIndex !== -1 && assistIndex < match.away_scorers.length - 1) {
-                    const assists = match.away_scorers.slice(assistIndex + 1);
-                    
-                    assists.forEach(assister => {
-                        if (!assister || assister === 'لا يوجد بيانات' || assister.trim() === '') return;
-                        
-                        const parsed = parsePlayerEvent(assister);
-                        const key = `${parsed.name}_${match.away_team_id}`;
-                        if (!assisters[key]) {
-                            assisters[key] = {
-                                name: parsed.name,
-                                teamId: match.away_team_id,
-                                assists: 0
-                            };
-                        }
-                        assisters[key].assists += parsed.count;
-                    });
-                }
-            }
-        });
-        
-        const sortedAssisters = Object.values(assisters)
+    // Sort groups
+    const sortedGroupNames = Object.keys(groups).sort((a, b) => {
+        if (a === 'فرق بدون مجموعة') return 1;
+        if (b === 'فرق بدون مجموعة') return -1;
+        return a.localeCompare(b, 'ar');
+    });
+    
+    sortedGroupNames.forEach(groupName => {
+        const sortedAssisters = groups[groupName]
             .filter(a => a.assists > 0)
             .sort((a, b) => b.assists - a.assists);
         
@@ -2660,61 +2669,73 @@ function displayAssists(container) {
 }
 
 function displayCleanSheets(container) {
-    // Check if competition has groups
-    const hasGroups = allMatches.some(match => match.group || match.sector);
+    // Get teams data to build team group map
+    const teamsData = allMatches[0]?.teams || [];
+    const teamIdToGroupMap = {};
+    teamsData.forEach(team => {
+        teamIdToGroupMap[team.team_id] = team.group || null;
+    });
     
-    // Group matches by sector/group
-    const groups = {};
+    // Check if any team has a group
+    const hasGroups = Object.values(teamIdToGroupMap).some(group => group && group !== 'null' && group !== '');
+    
+    // Collect all clean sheets from all matches
+    const allKeepers = {};
+    
     allMatches.forEach(match => {
-        const group = hasGroups 
-            ? (match.group ? `المجموعة ${match.group}` : (match.sector || 'بدون مجموعة'))
-            : 'all';
-        if (!groups[group]) {
-            groups[group] = [];
+        if (match.status !== 'completed') return;
+        
+        // Home team clean sheet
+        if (match.away_score === 0) {
+            const teamInfo = getTeamInfo(match, match.home_team_id);
+            const key = match.home_team_id;
+            if (!allKeepers[key]) {
+                allKeepers[key] = {
+                    name: teamInfo.name,
+                    teamId: match.home_team_id,
+                    cleanSheets: 0
+                };
+            }
+            allKeepers[key].cleanSheets++;
         }
-        groups[group].push(match);
+        
+        // Away team clean sheet
+        if (match.home_score === 0) {
+            const teamInfo = getTeamInfo(match, match.away_team_id);
+            const key = match.away_team_id;
+            if (!allKeepers[key]) {
+                allKeepers[key] = {
+                    name: teamInfo.name,
+                    teamId: match.away_team_id,
+                    cleanSheets: 0
+                };
+            }
+            allKeepers[key].cleanSheets++;
+        }
+    });
+    
+    // Group keepers by team.group
+    const groups = {};
+    Object.values(allKeepers).forEach(keeper => {
+        const teamGroup = teamIdToGroupMap[keeper.teamId];
+        const groupName = (teamGroup && teamGroup !== 'null' && teamGroup !== '') ? teamGroup : 'فرق بدون مجموعة';
+        if (!groups[groupName]) {
+            groups[groupName] = [];
+        }
+        groups[groupName].push(keeper);
     });
     
     let html = '';
     
-    // Process each group separately
-    Object.keys(groups).sort().forEach(groupName => {
-        const keepers = {};
-        const groupMatches = groups[groupName];
-        
-        groupMatches.forEach(match => {
-            if (match.status !== 'completed') return;
-            
-            // Home team clean sheet
-            if (match.away_score === 0) {
-                const teamInfo = getTeamInfo(match, match.home_team_id);
-                const key = match.home_team_id;
-                if (!keepers[key]) {
-                    keepers[key] = {
-                        name: teamInfo.name,
-                        teamId: match.home_team_id,
-                        cleanSheets: 0
-                    };
-                }
-                keepers[key].cleanSheets++;
-            }
-            
-            // Away team clean sheet
-            if (match.home_score === 0) {
-                const teamInfo = getTeamInfo(match, match.away_team_id);
-                const key = match.away_team_id;
-                if (!keepers[key]) {
-                    keepers[key] = {
-                        name: teamInfo.name,
-                        teamId: match.away_team_id,
-                        cleanSheets: 0
-                    };
-                }
-                keepers[key].cleanSheets++;
-            }
-        });
-        
-        const sortedKeepers = Object.values(keepers)
+    // Sort groups
+    const sortedGroupNames = Object.keys(groups).sort((a, b) => {
+        if (a === 'فرق بدون مجموعة') return 1;
+        if (b === 'فرق بدون مجموعة') return -1;
+        return a.localeCompare(b, 'ar');
+    });
+    
+    sortedGroupNames.forEach(groupName => {
+        const sortedKeepers = groups[groupName]
             .filter(k => k.cleanSheets > 0)
             .sort((a, b) => b.cleanSheets - a.cleanSheets);
         
@@ -2780,37 +2801,54 @@ function displayTeams() {
         return;
     }
     
-    // Check if competition has groups
-    const hasGroups = allMatches.some(match => match.group || match.sector);
+    // Get teams data from first match
+    const teamsData = allMatches[0]?.teams || [];
     
-    // Group teams by sector/group
+    if (teamsData.length === 0) {
+        container.innerHTML = '<div class="no-data">لا توجد بيانات الفرق</div>';
+        return;
+    }
+    
+    // Group teams by their team.group property from team data (NOT match data)
     const groups = {};
-    allMatches.forEach(match => {
-        const group = hasGroups 
-            ? (match.group ? `المجموعة ${match.group}` : (match.sector || 'بدون مجموعة'))
-            : 'all';
-        if (!groups[group]) {
-            groups[group] = new Set();
+    teamsData.forEach(team => {
+        const teamGroupValue = team.group;
+        
+        // Determine group name from team.group field
+        let groupName;
+        if (teamGroupValue && teamGroupValue !== 'null' && teamGroupValue !== '' && teamGroupValue !== null) {
+            groupName = teamGroupValue;
+        } else {
+            groupName = 'فرق بدون مجموعة';
         }
-        groups[group].add(match.home_team_id);
-        groups[group].add(match.away_team_id);
+        
+        if (!groups[groupName]) {
+            groups[groupName] = [];
+        }
+        groups[groupName].push({
+            teamId: team.team_id,
+            name: team.name || 'فريق غير معروف',
+            logo: team.logo || null
+        });
     });
+    
+    // Check if we have actual groups (more than just default)
+    const hasGroups = Object.keys(groups).length > 1 || !groups['فرق بدون مجموعة'];
     
     let html = '';
     
+    // Sort groups - put actual groups first, then "فرق بدون مجموعة" last
+    const sortedGroupNames = Object.keys(groups).sort((a, b) => {
+        if (a === 'فرق بدون مجموعة') return 1;
+        if (b === 'فرق بدون مجموعة') return -1;
+        return a.localeCompare(b, 'ar');
+    });
+    
     // Process each group separately
-    Object.keys(groups).sort().forEach(groupName => {
-        const teamIds = Array.from(groups[groupName]);
-        
-        const teams = teamIds.map(teamId => {
-            const matchWithTeam = allMatches.find(m => 
-                m.home_team_id === teamId || m.away_team_id === teamId
-            );
-            const teamInfo = matchWithTeam ? getTeamInfo(matchWithTeam, teamId) : { name: 'فريق غير معروف', logo: null };
-            return { ...teamInfo, teamId };
-        })
-        .filter(team => team.name !== 'فريق غير معروف') // Filter out unknown teams
-        .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+    sortedGroupNames.forEach(groupName => {
+        const teams = groups[groupName]
+            .filter(team => team.name !== 'فريق غير معروف')
+            .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
         
         if (teams.length > 0) {
             if (hasGroups) {
