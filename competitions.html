@@ -169,8 +169,14 @@
                 </div>
                 <div id="team-stats-section" class="collapsible-content">
                     <div class="stats-tabs">
-                        <button class="stats-btn active" onclick="showTeamStats('scorers')">الهدافون</button>
+                        <button class="stats-btn active" onclick="showTeamStats('overall')">إحصائيات عامة</button>
+                        <button class="stats-btn" onclick="showTeamStats('scorers')">الهدافون</button>
                         <button class="stats-btn" onclick="showTeamStats('assists')">صناعة الأهداف</button>
+                    </div>
+                    <div id="overall-filter-buttons" style="display: none; text-align: center; margin: 15px 0;">
+                        <button class="filter-btn active" onclick="filterTeamStats('all')">الكل</button>
+                        <button class="filter-btn" onclick="filterTeamStats('home')">على أرضه</button>
+                        <button class="filter-btn" onclick="filterTeamStats('away')">خارج أرضه</button>
                     </div>
                     <div id="team-stats-container"></div>
                 </div>
