@@ -1923,11 +1923,14 @@ function displayStandings() {
         const teamIds = groups[groupName];
         const standings = calculateStandings(teamIds, teamIdToGroupMap);
         
-        // Always show group header
-        const groupHeader = document.createElement('h3');
-        groupHeader.textContent = groupName;
-        groupHeader.style.cssText = 'background: #7e0000; color: white; padding: 15px 20px; margin: 20px 0 10px 0; border-radius: 10px; text-align: center;';
-        container.appendChild(groupHeader);
+        // Show group header unless there's only one group and it's the default group
+        const showHeader = !(Object.keys(groups).length === 1 && groupName === 'فرق بدون مجموعة');
+        if (showHeader) {
+            const groupHeader = document.createElement('h3');
+            groupHeader.textContent = groupName;
+            groupHeader.style.cssText = 'background: #7e0000; color: white; padding: 15px 20px; margin: 20px 0 10px 0; border-radius: 10px; text-align: center;';
+            container.appendChild(groupHeader);
+        }
         
         container.appendChild(createStandingsTable(standings, teamsData));
     });
@@ -1943,6 +1946,19 @@ function calculateStandings(teamIds, teamIdToGroupMap) {
     
     // Initialize standings for each team in this group
     teamIds.forEach(teamId => {
+        // Get team data to check for point deduction
+        const teamsData = allMatches.length > 0 && allMatches[0].teams ? allMatches[0].teams : [];
+        const teamInfo = getTeamInfoById(teamId, teamsData);
+        
+        // Parse point deduction if exists
+        let initialPoints = 0;
+        if (teamInfo && teamInfo.point_deduction) {
+            const deduction = parseInt(teamInfo.point_deduction);
+            if (!isNaN(deduction)) {
+                initialPoints = -deduction; // Start with negative points
+            }
+        }
+        
         standings[teamId] = {
             teamId: teamId,
             played: 0,
@@ -1952,7 +1968,7 @@ function calculateStandings(teamIds, teamIdToGroupMap) {
             goalsFor: 0,
             goalsAgainst: 0,
             goalDiff: 0,
-            points: 0,
+            points: initialPoints, // Apply deduction from start
             penaltyPoints: 0
         };
     });
@@ -2535,10 +2551,14 @@ function displayScorers(container) {
             .sort((a, b) => b.goals - a.goals);
         
         if (sortedScorers.length > 0) {
-            if (hasGroups) {
+            // Show group header unless there's only one group and it's the default group
+            const showHeader = !(Object.keys(groups).length === 1 && groupName === 'فرق بدون مجموعة');
+            if (showHeader) {
                 html += `<h3 class="group-header">${groupName}</h3>`;
             }
-            html += createStatsList(sortedScorers, 'goals', 'الهدافين');
+            // Limit to top 15 players
+            const topScorers = sortedScorers.slice(0, 15);
+            html += createStatsList(topScorers, 'goals', 'الهدافين');
         }
     });
     
@@ -2651,10 +2671,14 @@ function displayAssists(container) {
         console.log(`Group ${groupName}: Found ${sortedAssisters.length} assisters`);
         
         if (sortedAssisters.length > 0) {
-            if (hasGroups) {
+            // Show group header unless there's only one group and it's the default group
+            const showHeader = !(Object.keys(groups).length === 1 && groupName === 'فرق بدون مجموعة');
+            if (showHeader) {
                 html += `<h3 class="group-header">${groupName}</h3>`;
             }
-            html += createStatsList(sortedAssisters, 'assists', 'صناعة الأهداف');
+            // Limit to top 15 players
+            const topAssisters = sortedAssisters.slice(0, 15);
+            html += createStatsList(topAssisters, 'assists', 'صناعة الأهداف');
         }
     });
     
@@ -2740,7 +2764,9 @@ function displayCleanSheets(container) {
             .sort((a, b) => b.cleanSheets - a.cleanSheets);
         
         if (sortedKeepers.length > 0) {
-            if (hasGroups) {
+            // Show group header unless there's only one group and it's the default group
+            const showHeader = !(Object.keys(groups).length === 1 && groupName === 'فرق بدون مجموعة');
+            if (showHeader) {
                 html += `<h3 class="group-header">${groupName}</h3>`;
             }
             html += createStatsList(sortedKeepers, 'cleanSheets', 'الشباك النظيفة');
@@ -2851,7 +2877,9 @@ function displayTeams() {
             .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
         
         if (teams.length > 0) {
-            if (hasGroups) {
+            // Show group header unless there's only one group and it's the default group
+            const showHeader = !(Object.keys(groups).length === 1 && groupName === 'فرق بدون مجموعة');
+            if (showHeader) {
                 html += `<h3 class="group-header">${groupName}</h3>`;
             }
             html += '<div class="teams-grid">';
@@ -3150,6 +3178,120 @@ function displayTeamMatches(teamId, teamName, container) {
 // ===== TEAM-SPECIFIC STATISTICS =====
 let currentTeamId = null;
 
+// Calculate comprehensive team statistics with filter (all/home/away)
+function calculateTeamStatistics(teamId, filterType = 'all') {
+    if (!allMatches || allMatches.length === 0 || !teamId) {
+        return null;
+    }
+    
+    const mode = filterType.toLowerCase().trim();
+    
+    let played = 0;
+    let wins = 0;
+    let draws = 0;
+    let losses = 0;
+    let goalsFor = 0;
+    let goalsAgainst = 0;
+    
+    allMatches.forEach(match => {
+        // Only count completed matches
+        if (match.status !== 'completed' && match.status !== 'finished') return;
+        
+        const homeId = match.home_team_id || match.homeTeamId;
+        const awayId = match.away_team_id || match.awayTeamId;
+        const homeScore = match.home_score !== undefined ? match.home_score : 0;
+        const awayScore = match.away_score !== undefined ? match.away_score : 0;
+        
+        const isHomeTeam = teamId === homeId;
+        const isAwayTeam = teamId === awayId;
+        
+        // Process home matches
+        if (isHomeTeam && (mode === 'all' || mode === 'home')) {
+            played++;
+            goalsFor += homeScore;
+            goalsAgainst += awayScore;
+            
+            if (homeScore > awayScore) wins++;
+            else if (homeScore < awayScore) losses++;
+            else draws++;
+        }
+        // Process away matches
+        else if (isAwayTeam && (mode === 'all' || mode === 'away')) {
+            played++;
+            goalsFor += awayScore;
+            goalsAgainst += homeScore;
+            
+            if (awayScore > homeScore) wins++;
+            else if (awayScore < homeScore) losses++;
+            else draws++;
+        }
+    });
+    
+    return {
+        played: played,
+        wins: wins,
+        draws: draws,
+        losses: losses,
+        goalsFor: goalsFor,
+        goalsAgainst: goalsAgainst,
+        winPercentage: played > 0 ? (wins / played * 100).toFixed(1) : '0.0',
+        drawPercentage: played > 0 ? (draws / played * 100).toFixed(1) : '0.0',
+        lossPercentage: played > 0 ? (losses / played * 100).toFixed(1) : '0.0',
+        goalsForAvg: played > 0 ? (goalsFor / played).toFixed(2) : '0.00',
+        goalsAgainstAvg: played > 0 ? (goalsAgainst / played).toFixed(2) : '0.00'
+    };
+}
+
+// Display team statistics in container
+function displayTeamStatistics(container, teamId, filterType = 'all') {
+    const stats = calculateTeamStatistics(teamId, filterType);
+    
+    if (!stats || stats.played === 0) {
+        container.innerHTML = '<div class="no-data">لا توجد مباريات مكتملة</div>';
+        return;
+    }
+    
+    const filterLabel = filterType === 'home' ? 'على أرضه' : filterType === 'away' ? 'خارج أرضه' : 'جميع المباريات';
+    
+    container.innerHTML = `
+        <div class="team-statistics-container">
+            <h3 style="text-align: center; color: #7e0000; margin-bottom: 20px;">📊 إحصائيات الفريق - ${filterLabel}</h3>
+            
+            <div class="stat-card">
+                <div class="stat-label">⚽ إجمالي المباريات</div>
+                <div class="stat-value">${stats.played}</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">🏆 الفوز</div>
+                <div class="stat-value">${stats.wins} <span style="color: #666; font-size: 0.9em;">(${stats.winPercentage}%)</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">🤝 التعادل</div>
+                <div class="stat-value">${stats.draws} <span style="color: #666; font-size: 0.9em;">(${stats.drawPercentage}%)</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">❌ الخسارة</div>
+                <div class="stat-value">${stats.losses} <span style="color: #666; font-size: 0.9em;">(${stats.lossPercentage}%)</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">⚽ إجمالي الأهداف المسجلة</div>
+                <div class="stat-value">${stats.goalsFor} <span style="color: #666; font-size: 0.9em;">(${stats.goalsForAvg} / مباراة)</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">🥅 إجمالي الأهداف المستقبلة</div>
+                <div class="stat-value">${stats.goalsAgainst} <span style="color: #666; font-size: 0.9em;">(${stats.goalsAgainstAvg} / مباراة)</span></div>
+            </div>
+        </div>
+    `;
+}
+
+let currentStatsFilter = 'all'; // Track current filter for overall stats
+
 function showTeamStats(statType) {
     // Update active button
     document.querySelectorAll('.stats-tabs .stats-btn').forEach(btn => {
@@ -3158,18 +3300,49 @@ function showTeamStats(statType) {
     event.target.classList.add('active');
     
     const container = document.getElementById('team-stats-container');
+    const filterButtons = document.getElementById('overall-filter-buttons');
+    
     container.innerHTML = '<div class="loading"><div class="loader"></div><p>جاري التحميل...</p></div>';
     
     if (!currentTeamId || !allMatches || allMatches.length === 0) {
         container.innerHTML = '<div class="no-data">لا توجد بيانات</div>';
+        if (filterButtons) filterButtons.style.display = 'none';
         return;
     }
     
-    if (statType === 'scorers') {
-        displayTeamScorers(container, currentTeamId);
-    } else if (statType === 'assists') {
-        displayTeamAssists(container, currentTeamId);
+    if (statType === 'overall') {
+        // Show filter buttons for overall stats
+        if (filterButtons) filterButtons.style.display = 'block';
+        // Reset to 'all' filter
+        currentStatsFilter = 'all';
+        document.querySelectorAll('#overall-filter-buttons .filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector('#overall-filter-buttons .filter-btn[onclick*="all"]').classList.add('active');
+        displayTeamStatistics(container, currentTeamId, 'all');
+    } else {
+        // Hide filter buttons for other tabs
+        if (filterButtons) filterButtons.style.display = 'none';
+        
+        if (statType === 'scorers') {
+            displayTeamScorers(container, currentTeamId);
+        } else if (statType === 'assists') {
+            displayTeamAssists(container, currentTeamId);
+        }
     }
+}
+
+// Filter team statistics by All/Home/Away
+function filterTeamStats(filterType) {
+    // Update active filter button
+    document.querySelectorAll('#overall-filter-buttons .filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    const container = document.getElementById('team-stats-container');
+    container.innerHTML = '<div class="loading"><div class="loader"></div><p>جاري التحميل...</p></div>';
+    
+    currentStatsFilter = filterType;
+    displayTeamStatistics(container, currentTeamId, filterType);
 }
 
 function displayTeamScorers(container, teamId) {
