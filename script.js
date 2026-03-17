@@ -1224,7 +1224,7 @@ function showSectorSelectionModal(competition, ageData, seasonName) {
         btn.textContent = sectorName;
         btn.onclick = () => {
             closeSectorModal();
-            loadSingleSectorMatches(competition, ageData, seasonName, sectorName, matchesUrls[index]);
+            loadSingleSectorMatches(competition, ageData, seasonName, sectorName, matchesUrls[index], matchesUrls, sectorNames);
         };
         sectorOptions.appendChild(btn);
     });
@@ -1320,7 +1320,7 @@ async function loadCompetitionMatches(competition, ageData, seasonName) {
 }
 
 // Load single sector matches (when user selects a specific group)
-async function loadSingleSectorMatches(competition, ageData, seasonName, sectorName, sectorUrl) {
+async function loadSingleSectorMatches(competition, ageData, seasonName, sectorName, sectorUrl, allMatchesUrls, allSectorNames) {
     const container = document.getElementById('competition-matches-container');
     const title = document.getElementById('competition-title');
     
@@ -1344,8 +1344,8 @@ async function loadSingleSectorMatches(competition, ageData, seasonName, sectorN
             return;
         }
         
-        // Add teams data to each match
-        allMatches = data.matches.map(match => ({
+        // Build selected sector matches
+        const selectedMatches = data.matches.map(match => ({
             ...match,
             teams: data.teams,
             competition: competition.name.ar,
@@ -1353,8 +1353,38 @@ async function loadSingleSectorMatches(competition, ageData, seasonName, sectorN
             season: seasonName,
             sector: sectorName
         }));
-        
-        displayMatchesByWeeks(allMatches);
+
+        // Load ALL sectors into allMatches so the Teams tab shows every match
+        if (allMatchesUrls && allMatchesUrls.length > 1) {
+            allMatches = [...selectedMatches];
+            for (let i = 0; i < allMatchesUrls.length; i++) {
+                if (allMatchesUrls[i] === sectorUrl) continue; // already loaded above
+                try {
+                    const r = await fetch(allMatchesUrls[i]);
+                    if (!r.ok) continue;
+                    const d = await r.json();
+                    if (d.matches && d.matches.length > 0) {
+                        const sn = allSectorNames ? (allSectorNames[i] || `مجموعة ${i + 1}`) : sectorName;
+                        d.matches.forEach(match => {
+                            allMatches.push({
+                                ...match,
+                                teams: d.teams,
+                                competition: competition.name.ar,
+                                age: ageData.age,
+                                season: seasonName,
+                                sector: sn
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Failed to load sector:', allMatchesUrls[i], e);
+                }
+            }
+        } else {
+            allMatches = selectedMatches;
+        }
+
+        displayMatchesByWeeks(selectedMatches);
     } catch (error) {
         console.error('Error loading sector matches:', error);
         container.innerHTML = '<div class="no-data">فشل تحميل المباريات</div>';
@@ -2827,8 +2857,18 @@ function displayTeams() {
         return;
     }
     
-    // Get teams data from first match
-    const teamsData = allMatches[0]?.teams || [];
+    // Collect unique teams across all sectors
+    const teamsMap = new Map();
+    allMatches.forEach(match => {
+        if (match.teams) {
+            match.teams.forEach(team => {
+                if (!teamsMap.has(team.team_id)) {
+                    teamsMap.set(team.team_id, team);
+                }
+            });
+        }
+    });
+    const teamsData = Array.from(teamsMap.values());
     
     if (teamsData.length === 0) {
         container.innerHTML = '<div class="no-data">لا توجد بيانات الفرق</div>';
