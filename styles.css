@@ -4988,7 +4988,7 @@ footer p {
 }
 
 .collapsible-content.active {
-    max-height: 5000px;
+    max-height: 100000px;
     padding: 25px;
 }
 
