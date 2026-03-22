@@ -724,7 +724,7 @@ function showMatchDetails(match) {
         <div class="modal-header">
             <h2>${match.competition || 'مباراة'} - ${match.age || ''}</h2>
             ${match.group ? `<div class="modal-group">المجموعة ${match.group}</div>` : ''}
-            ${match.week ? `<div class="modal-week">الأسبوع ${match.week}</div>` : ''}
+            ${match.week ? `<div class="modal-week">الجولة ${match.week}</div>` : ''}
         </div>
         
         <div class="modal-match-display">
@@ -1354,41 +1354,43 @@ async function loadSingleSectorMatches(competition, ageData, seasonName, sectorN
             sector: sectorName
         }));
 
-        // Load ALL sectors into allMatches so the Teams tab shows every match
-        if (allMatchesUrls && allMatchesUrls.length > 1) {
-            allMatches = [...selectedMatches];
-            for (let i = 0; i < allMatchesUrls.length; i++) {
-                if (allMatchesUrls[i] === sectorUrl) continue; // already loaded above
-                try {
-                    const r = await fetch(allMatchesUrls[i]);
-                    if (!r.ok) continue;
-                    const d = await r.json();
-                    if (d.matches && d.matches.length > 0) {
-                        const sn = allSectorNames ? (allSectorNames[i] || `مجموعة ${i + 1}`) : sectorName;
-                        d.matches.forEach(match => {
-                            allMatches.push({
-                                ...match,
-                                teams: d.teams,
-                                competition: competition.name.ar,
-                                age: ageData.age,
-                                season: seasonName,
-                                sector: sn
-                            });
-                        });
-                    }
-                } catch (e) {
-                    console.warn('Failed to load sector:', allMatchesUrls[i], e);
-                }
-            }
-        } else {
-            allMatches = selectedMatches;
-        }
+        // Set allMatches to only the selected sector so statistics show only this sector's data
+        allMatches = selectedMatches;
 
         displayMatchesByWeeks(selectedMatches);
     } catch (error) {
         console.error('Error loading sector matches:', error);
         container.innerHTML = '<div class="no-data">فشل تحميل المباريات</div>';
     }
+}
+
+// Convert stage number to Arabic text
+function convertStageToArabic(stage) {
+    // Handle knockout stage
+    if (stage && stage.toString().toLowerCase() === 'knockout') {
+        return 'خروج المغلوب';
+    }
+
+    // If stage is already text or doesn't match a number pattern, return as is
+    if (!stage || stage === 'بدون مرحلة' || isNaN(stage)) {
+        return stage;
+    }
+
+    // Convert numbers to Arabic text
+    const stageMap = {
+        '1': 'المرحلة الأولى',
+        '2': 'المرحلة الثانية',
+        '3': 'المرحلة الثالثة',
+        '4': 'المرحلة الرابعة',
+        '5': 'المرحلة الخامسة',
+        '6': 'المرحلة السادسة',
+        '7': 'المرحلة السابعة',
+        '8': 'المرحلة الثامنة',
+        '9': 'المرحلة التاسعة',
+        '10': 'المرحلة العاشرة'
+    };
+
+    return stageMap[stage.toString()] || stage;
 }
 
 // Display matches organized by weeks
@@ -1439,44 +1441,99 @@ function displayMatchesByWeeks(matches) {
         if (b === 'غير محدد') return -1;
         return new Date(a) - new Date(b);
     });
-    
-    // Collect unique weeks for navigation (sorted)
-    const allWeeks = new Set();
-    sortedDates.forEach(date => {
-        Object.keys(dateGroups[date]).forEach(week => {
-            allWeeks.add(week);
-        });
+
+    // Check if matches have stages
+    const hasStages = matches.some(match => match.stage && match.stage !== '' && match.stage !== 'null');
+
+    // Collect unique weeks for navigation, grouped by stage if applicable
+    const weeksByStage = {};
+    matches.forEach(match => {
+        const week = match.week || 'غير محدد';
+        const stage = hasStages ? (match.stage || 'بدون مرحلة') : 'no-stage';
+
+        if (!weeksByStage[stage]) {
+            weeksByStage[stage] = new Set();
+        }
+        weeksByStage[stage].add(week);
     });
-    
-    const sortedWeeks = Array.from(allWeeks).sort((a, b) => {
-        if (a === 'غير محدد') return 1;
-        if (b === 'غير محدد') return -1;
-        return parseInt(a) - parseInt(b);
-    });
-    
-    // Create week navigation buttons
+
+    // Create week navigation buttons grouped by stage
     weeksList.innerHTML = '';
-    sortedWeeks.forEach(week => {
-        const btn = document.createElement('button');
-        btn.className = 'week-btn';
-        btn.textContent = week === 'غير محدد' ? week : `الأسبوع ${week}`;
-        btn.onclick = () => scrollToWeek(week);
-        weeksList.appendChild(btn);
-    });
-    
+
+    if (hasStages) {
+        // Group weeks by stage with separate scrollers
+        const sortedStages = Object.keys(weeksByStage).sort((a, b) => {
+            if (a === 'بدون مرحلة') return 1;
+            if (b === 'بدون مرحلة') return -1;
+            return a.localeCompare(b, 'ar');
+        });
+
+        sortedStages.forEach(stage => {
+            // Create container for this stage
+            const stageContainer = document.createElement('div');
+            stageContainer.className = 'stage-container';
+            stageContainer.style.cssText = 'margin-bottom: 20px;';
+
+            // Add stage header
+            const stageHeader = document.createElement('div');
+            stageHeader.className = 'stage-header';
+            stageHeader.textContent = convertStageToArabic(stage);
+            stageHeader.style.cssText = 'background: #7e0000; color: white; padding: 10px; margin: 10px 0 5px 0; border-radius: 5px; text-align: center; font-weight: bold; font-size: 14px;';
+            stageContainer.appendChild(stageHeader);
+
+            // Create scrollable weeks container for this stage
+            const stageWeeksScroller = document.createElement('div');
+            stageWeeksScroller.className = 'stage-weeks-scroller';
+            stageWeeksScroller.style.cssText = 'max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; padding: 5px; background: #f9f9f9;';
+
+            // Add weeks for this stage
+            const sortedWeeks = Array.from(weeksByStage[stage]).sort((a, b) => {
+                if (a === 'غير محدد') return 1;
+                if (b === 'غير محدد') return -1;
+                return parseInt(a) - parseInt(b);
+            });
+
+            sortedWeeks.forEach(week => {
+                const btn = document.createElement('button');
+                btn.className = 'week-btn';
+                btn.textContent = week === 'غير محدد' ? week : `الجولة ${week}`;
+                btn.onclick = () => scrollToWeek(week, stage);
+                stageWeeksScroller.appendChild(btn);
+            });
+
+            stageContainer.appendChild(stageWeeksScroller);
+            weeksList.appendChild(stageContainer);
+        });
+    } else {
+        // No stages, display weeks normally
+        const allWeeks = Array.from(weeksByStage['no-stage'] || []).sort((a, b) => {
+            if (a === 'غير محدد') return 1;
+            if (b === 'غير محدد') return -1;
+            return parseInt(a) - parseInt(b);
+        });
+
+        allWeeks.forEach(week => {
+            const btn = document.createElement('button');
+            btn.className = 'week-btn';
+            btn.textContent = week === 'غير محدد' ? week : `الجولة ${week}`;
+            btn.onclick = () => scrollToWeek(week, null);
+            weeksList.appendChild(btn);
+        });
+    }
+
     // Find the nearest upcoming match
     const now = new Date();
     let nearestUpcomingMatch = null;
     let nearestWeek = null;
     let minTimeDiff = Infinity;
-    
+
     sortedDates.forEach(date => {
         Object.keys(dateGroups[date]).forEach(week => {
             dateGroups[date][week].forEach(match => {
                 if (match.status === 'upcoming' || match.status === 'scheduled') {
                     const matchDate = new Date(`${match.date} ${match.time || '00:00'}`);
                     const timeDiff = matchDate - now;
-                    
+
                     if (timeDiff >= 0 && timeDiff < minTimeDiff) {
                         minTimeDiff = timeDiff;
                         nearestUpcomingMatch = match;
@@ -1486,7 +1543,7 @@ function displayMatchesByWeeks(matches) {
             });
         });
     });
-    
+
     // Display matches by date, then by week
     container.innerHTML = '';
     sortedDates.forEach(date => {
@@ -1499,10 +1556,12 @@ function displayMatchesByWeeks(matches) {
         weeksInDate.forEach(week => {
             const weekSection = document.createElement('div');
             weekSection.className = 'week-section';
-            weekSection.id = `week-${week}-${date}`;
-            
-            // Get first match to extract competition info
+
+            // Get first match to extract stage info
             const firstMatch = dateGroups[date][week][0];
+            const stage = firstMatch.stage || 'no-stage';
+            weekSection.id = `week-${week}-${stage}-${date}`;
+
             const competitionInfo = `${firstMatch.competition || 'بطولة'} - ${firstMatch.age || ''}`;
             const dateInfo = formatArabicDate(new Date(date));
             
@@ -1510,7 +1569,7 @@ function displayMatchesByWeeks(matches) {
             weekHeader.className = 'week-header';
             weekHeader.innerHTML = `
                 <div class="week-header-content">
-                    <h3 class="week-number">${week === 'غير محدد' ? week : `الأسبوع ${week}`}</h3>
+                    <h3 class="week-number">${week === 'غير محدد' ? week : `الجولة ${week}`}</h3>
                     <span class="week-competition">${competitionInfo}</span>
                     <span class="week-date">${dateInfo}</span>
                 </div>
@@ -1557,7 +1616,7 @@ function displayMatchesByWeeks(matches) {
                 // Update active week button
                 document.querySelectorAll('.week-btn').forEach(btn => {
                     btn.classList.remove('active');
-                    if (btn.textContent === (nearestWeek === 'غير محدد' ? nearestWeek : `الأسبوع ${nearestWeek}`)) {
+                    if (btn.textContent === (nearestWeek === 'غير محدد' ? nearestWeek : `الجولة ${nearestWeek}`)) {
                         btn.classList.add('active');
                     }
                 });
@@ -1613,37 +1672,92 @@ function displayMatchesByWeeksAndSectors(matches) {
         if (b === 'غير محدد') return -1;
         return new Date(a) - new Date(b);
     });
-    
-    // Collect unique weeks for navigation (sorted)
-    const allWeeks = new Set();
-    sortedDates.forEach(date => {
-        Object.keys(dateGroups[date]).forEach(week => {
-            allWeeks.add(week);
-        });
+
+    // Check if matches have stages
+    const hasStages = matches.some(match => match.stage && match.stage !== '' && match.stage !== 'null');
+
+    // Collect unique weeks for navigation, grouped by stage if applicable
+    const weeksByStage = {};
+    matches.forEach(match => {
+        const week = match.week || 'غير محدد';
+        const stage = hasStages ? (match.stage || 'بدون مرحلة') : 'no-stage';
+
+        if (!weeksByStage[stage]) {
+            weeksByStage[stage] = new Set();
+        }
+        weeksByStage[stage].add(week);
     });
-    
-    const sortedWeeks = Array.from(allWeeks).sort((a, b) => {
-        if (a === 'غير محدد') return 1;
-        if (b === 'غير محدد') return -1;
-        return parseInt(a) - parseInt(b);
-    });
-    
-    // Create week navigation buttons
+
+    // Create week navigation buttons grouped by stage
     weeksList.innerHTML = '';
-    sortedWeeks.forEach(week => {
-        const btn = document.createElement('button');
-        btn.className = 'week-btn';
-        btn.textContent = week === 'غير محدد' ? week : `الأسبوع ${week}`;
-        btn.onclick = () => scrollToWeek(week);
-        weeksList.appendChild(btn);
-    });
-    
+
+    if (hasStages) {
+        // Group weeks by stage with separate scrollers
+        const sortedStages = Object.keys(weeksByStage).sort((a, b) => {
+            if (a === 'بدون مرحلة') return 1;
+            if (b === 'بدون مرحلة') return -1;
+            return a.localeCompare(b, 'ar');
+        });
+
+        sortedStages.forEach(stage => {
+            // Create container for this stage
+            const stageContainer = document.createElement('div');
+            stageContainer.className = 'stage-container';
+            stageContainer.style.cssText = 'margin-bottom: 20px;';
+
+            // Add stage header
+            const stageHeader = document.createElement('div');
+            stageHeader.className = 'stage-header';
+            stageHeader.textContent = convertStageToArabic(stage);
+            stageHeader.style.cssText = 'background: #7e0000; color: white; padding: 10px; margin: 10px 0 5px 0; border-radius: 5px; text-align: center; font-weight: bold; font-size: 14px;';
+            stageContainer.appendChild(stageHeader);
+
+            // Create scrollable weeks container for this stage
+            const stageWeeksScroller = document.createElement('div');
+            stageWeeksScroller.className = 'stage-weeks-scroller';
+            stageWeeksScroller.style.cssText = 'max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; padding: 5px; background: #f9f9f9;';
+
+            // Add weeks for this stage
+            const sortedWeeks = Array.from(weeksByStage[stage]).sort((a, b) => {
+                if (a === 'غير محدد') return 1;
+                if (b === 'غير محدد') return -1;
+                return parseInt(a) - parseInt(b);
+            });
+
+            sortedWeeks.forEach(week => {
+                const btn = document.createElement('button');
+                btn.className = 'week-btn';
+                btn.textContent = week === 'غير محدد' ? week : `الجولة ${week}`;
+                btn.onclick = () => scrollToWeek(week, stage);
+                stageWeeksScroller.appendChild(btn);
+            });
+
+            stageContainer.appendChild(stageWeeksScroller);
+            weeksList.appendChild(stageContainer);
+        });
+    } else {
+        // No stages, display weeks normally
+        const allWeeks = Array.from(weeksByStage['no-stage'] || []).sort((a, b) => {
+            if (a === 'غير محدد') return 1;
+            if (b === 'غير محدد') return -1;
+            return parseInt(a) - parseInt(b);
+        });
+
+        allWeeks.forEach(week => {
+            const btn = document.createElement('button');
+            btn.className = 'week-btn';
+            btn.textContent = week === 'غير محدد' ? week : `الجولة ${week}`;
+            btn.onclick = () => scrollToWeek(week, null);
+            weeksList.appendChild(btn);
+        });
+    }
+
     // Find the nearest upcoming match
     const now = new Date();
     let nearestUpcomingMatch = null;
     let nearestWeek = null;
     let minTimeDiff = Infinity;
-    
+
     sortedDates.forEach(date => {
         Object.keys(dateGroups[date]).forEach(week => {
             Object.keys(dateGroups[date][week]).forEach(sector => {
@@ -1675,11 +1789,15 @@ function displayMatchesByWeeksAndSectors(matches) {
         weeksInDate.forEach(week => {
             const weekSection = document.createElement('div');
             weekSection.className = 'week-section';
-            weekSection.id = `week-${week}-${date}`;
-            
+
             // Get all sectors for this week on this date
             const sectors = Object.keys(dateGroups[date][week]);
-            
+
+            // Get stage from first match
+            const firstSectorMatch = dateGroups[date][week][sectors[0]][0];
+            const stage = firstSectorMatch.stage || 'no-stage';
+            weekSection.id = `week-${week}-${stage}-${date}`;
+
             // Display each sector within the week
             sectors.forEach(sector => {
                 const sectorContainer = document.createElement('div');
@@ -1697,7 +1815,7 @@ function displayMatchesByWeeksAndSectors(matches) {
                 sectorHeader.className = 'sector-header';
                 sectorHeader.innerHTML = `
                     <div class="sector-header-content">
-                        <h3 class="sector-number">${week === 'غير محدد' ? week : `الأسبوع ${week}`}</h3>
+                        <h3 class="sector-number">${week === 'غير محدد' ? week : `الجولة ${week}`}</h3>
                         <span class="sector-competition">${sector}</span>
                         <span class="sector-date">${dateInfo}</span>
                     </div>
@@ -1747,7 +1865,7 @@ function displayMatchesByWeeksAndSectors(matches) {
                 // Update active week button
                 document.querySelectorAll('.week-btn').forEach(btn => {
                     btn.classList.remove('active');
-                    if (btn.textContent === (nearestWeek === 'غير محدد' ? nearestWeek : `الأسبوع ${nearestWeek}`)) {
+                    if (btn.textContent === (nearestWeek === 'غير محدد' ? nearestWeek : `الجولة ${nearestWeek}`)) {
                         btn.classList.add('active');
                     }
                 });
@@ -1757,18 +1875,27 @@ function displayMatchesByWeeksAndSectors(matches) {
 }
 
 // Scroll to specific week
-function scrollToWeek(week) {
-    // Find the first section with this week number
+function scrollToWeek(week, stage = null) {
+    // Find the section with this week number and stage
     const allSections = document.querySelectorAll('.week-section');
     let targetSection = null;
-    
+
     for (const section of allSections) {
-        if (section.id.startsWith(`week-${week}-`) || section.id === `week-${week}`) {
-            targetSection = section;
-            break;
+        if (stage && stage !== 'no-stage') {
+            // If stage is specified, match both week and stage
+            if (section.id.includes(`week-${week}-${stage}-`)) {
+                targetSection = section;
+                break;
+            }
+        } else {
+            // If no stage, match like before (for backward compatibility)
+            if (section.id.startsWith(`week-${week}-`) || section.id === `week-${week}`) {
+                targetSection = section;
+                break;
+            }
         }
     }
-    
+
     if (targetSection) {
         // Close weeks sidebar on mobile if open
         const sidebar = document.querySelector('.weeks-sidebar');
@@ -1777,9 +1904,9 @@ function scrollToWeek(week) {
             sidebar.classList.remove('active');
             if (toggleBtn) toggleBtn.textContent = '📅';
         }
-        
+
         targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        
+
         // Update active button
         document.querySelectorAll('.week-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -3192,7 +3319,7 @@ function displayTeamMatches(teamId, teamName, container) {
             sectorHeader.className = 'sector-header';
             sectorHeader.innerHTML = `
                 <div class="sector-header-content">
-                    <h3 class="sector-number">${week === 'غير محدد' ? week : `الأسبوع ${week}`}</h3>
+                    <h3 class="sector-number">${week === 'غير محدد' ? week : `الجولة ${week}`}</h3>
                     <span class="sector-date">${dateInfo}</span>
                 </div>
             `;
