@@ -728,7 +728,7 @@ function showMatchDetails(match) {
         </div>
         
         <div class="modal-match-display">
-            <div class="modal-team">
+            <div class="modal-team clickable-team" onclick="navigateToTeamFromModal('${match.homeTeamId || match.home_team_id}')">
                 ${homeTeamInfo.logo ? `<img src="${homeTeamInfo.logo}" alt="${homeTeamInfo.name}" class="modal-team-logo">` : ''}
                 <div class="modal-team-name">${homeTeamInfo.name}</div>
             </div>
@@ -736,7 +736,7 @@ function showMatchDetails(match) {
                 <div class="modal-score-numbers">${homeScore} - ${awayScore}</div>
                 ${match.status === 'upcoming' || match.status === 'scheduled' ? `<div class="modal-match-time">${match.time || 'غير محدد'}</div>` : ''}
             </div>
-            <div class="modal-team">
+            <div class="modal-team clickable-team" onclick="navigateToTeamFromModal('${match.awayTeamId || match.away_team_id}')">
                 ${awayTeamInfo.logo ? `<img src="${awayTeamInfo.logo}" alt="${awayTeamInfo.name}" class="modal-team-logo">` : ''}
                 <div class="modal-team-name">${awayTeamInfo.name}</div>
             </div>
@@ -776,6 +776,23 @@ function showMatchDetails(match) {
 function closeModal() {
     const modal = document.getElementById('match-modal');
     hideModal(modal);
+}
+
+// Navigate to team page from match modal
+function navigateToTeamFromModal(teamId) {
+    // Close the modal first
+    closeModal();
+    
+    // Check if we're on competitions page (has team-details-page)
+    const teamDetailsPage = document.getElementById('team-details-page');
+    
+    if (teamDetailsPage) {
+        // We're on competitions page, show team details directly
+        showTeamDetails(teamId);
+    } else {
+        // We're on home page or another page, redirect to competitions with team parameter
+        window.location.href = `competitions.html?team=${teamId}`;
+    }
 }
 
 // Close modal when clicking outside
@@ -2950,6 +2967,11 @@ function createStatsList(data, valueKey, title) {
         return '<div class="no-data">لا توجد بيانات</div>';
     }
     
+    // Determine stat type from valueKey
+    let statType = 'goals';
+    if (valueKey === 'assists') statType = 'assists';
+    else if (valueKey === 'cleanSheets') statType = 'cleanSheets';
+    
     let html = '<div class="stats-list">';
     html += `<div class="stats-header"><span>اللاعب / الفريق</span><span>${title}</span></div>`;
     
@@ -2960,10 +2982,14 @@ function createStatsList(data, valueKey, title) {
         );
         const teamInfo = matchWithTeam ? getTeamInfo(matchWithTeam, item.teamId) : { name: 'فريق غير معروف', logo: null };
         
+        // Escape single quotes in names for onclick
+        const escapedName = item.name.replace(/'/g, "\\'");
+        const escapedTeamName = teamInfo.name.replace(/'/g, "\\'");
+        
         html += `
             <div class="stats-item">
                 <div class="stats-player-info">
-                    <div class="stats-player-name">${item.name}</div>
+                    <div class="stats-player-name clickable-player" onclick="showPlayerStatsPopup('${escapedName}', '${item.teamId}', '${escapedTeamName}', '${statType}')">${item.name}</div>
                     <div class="stats-team-name">${teamInfo.name}</div>
                 </div>
                 <div class="stats-value">${item[valueKey]}</div>
@@ -2973,6 +2999,225 @@ function createStatsList(data, valueKey, title) {
     
     html += '</div>';
     return html;
+}
+
+// ==================== PLAYER STATS POPUP ====================
+
+function showPlayerStatsPopup(playerName, teamId, teamName, statType) {
+    // Find all matches where this player has the stat
+    const playerMatches = [];
+    
+    allMatches.forEach(match => {
+        if (match.status !== 'completed') return;
+        
+        let count = 0;
+        let isHome = false;
+        
+        if (statType === 'goals') {
+            // Check home scorers
+            if (match.home_team_id === teamId && match.home_scorers) {
+                const assistMarker = 'صناعة الاهداف';
+                const assistIndex = match.home_scorers.findIndex(item => item === assistMarker);
+                const goals = assistIndex === -1 ? match.home_scorers : match.home_scorers.slice(0, assistIndex);
+                
+                goals.forEach(scorer => {
+                    const parsed = parsePlayerEvent(scorer);
+                    if (parsed.name === playerName) {
+                        count += parsed.count;
+                        isHome = true;
+                    }
+                });
+            }
+            // Check away scorers
+            if (match.away_team_id === teamId && match.away_scorers) {
+                const assistMarker = 'صناعة الاهداف';
+                const assistIndex = match.away_scorers.findIndex(item => item === assistMarker);
+                const goals = assistIndex === -1 ? match.away_scorers : match.away_scorers.slice(0, assistIndex);
+                
+                goals.forEach(scorer => {
+                    const parsed = parsePlayerEvent(scorer);
+                    if (parsed.name === playerName) {
+                        count += parsed.count;
+                        isHome = false;
+                    }
+                });
+            }
+        } else if (statType === 'assists') {
+            // Check home assists
+            if (match.home_team_id === teamId && match.home_scorers) {
+                const assistMarker = 'صناعة الاهداف';
+                const assistIndex = match.home_scorers.findIndex(item => item === assistMarker);
+                if (assistIndex !== -1) {
+                    const assists = match.home_scorers.slice(assistIndex + 1);
+                    assists.forEach(assister => {
+                        const parsed = parsePlayerEvent(assister);
+                        if (parsed.name === playerName) {
+                            count += parsed.count;
+                            isHome = true;
+                        }
+                    });
+                }
+            }
+            // Check away assists
+            if (match.away_team_id === teamId && match.away_scorers) {
+                const assistMarker = 'صناعة الاهداف';
+                const assistIndex = match.away_scorers.findIndex(item => item === assistMarker);
+                if (assistIndex !== -1) {
+                    const assists = match.away_scorers.slice(assistIndex + 1);
+                    assists.forEach(assister => {
+                        const parsed = parsePlayerEvent(assister);
+                        if (parsed.name === playerName) {
+                            count += parsed.count;
+                            isHome = false;
+                        }
+                    });
+                }
+            }
+        } else if (statType === 'cleanSheets') {
+            // Check if goalkeeper kept clean sheet
+            const isHomeTeam = match.home_team_id === teamId;
+            const isAwayTeam = match.away_team_id === teamId;
+            
+            if (isHomeTeam && match.away_score === 0) {
+                // Check if this player is the goalkeeper
+                if (match.home_squade) {
+                    const gkPattern = /^(.*?)\s*\((?:ح\.م|gk)\)/i;
+                    for (const player of match.home_squade) {
+                        const gkMatch = player.match(gkPattern);
+                        if (gkMatch && gkMatch[1].trim() === playerName) {
+                            count = 1;
+                            isHome = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (isAwayTeam && match.home_score === 0) {
+                if (match.away_squade) {
+                    const gkPattern = /^(.*?)\s*\((?:ح\.م|gk)\)/i;
+                    for (const player of match.away_squade) {
+                        const gkMatch = player.match(gkPattern);
+                        if (gkMatch && gkMatch[1].trim() === playerName) {
+                            count = 1;
+                            isHome = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (count > 0) {
+            // Get opponent info
+            const opponentId = isHome ? match.away_team_id : match.home_team_id;
+            const opponentInfo = getTeamInfo(match, opponentId);
+            
+            playerMatches.push({
+                matchId: match.match_id,
+                date: match.date,
+                opponent: opponentInfo.name,
+                opponentLogo: opponentInfo.logo,
+                score: isHome ? `${match.home_score} - ${match.away_score}` : `${match.away_score} - ${match.home_score}`,
+                count: count,
+                isHome: isHome,
+                match: match
+            });
+        }
+    });
+    
+    // Sort by date (newest first)
+    playerMatches.sort((a, b) => b.date.localeCompare(a.date));
+    
+    // Calculate total
+    const total = playerMatches.reduce((sum, m) => sum + m.count, 0);
+    
+    // Get stat label
+    let statLabel = 'الأهداف';
+    let statIcon = '⚽';
+    if (statType === 'assists') {
+        statLabel = 'صناعة الأهداف';
+        statIcon = '🎯';
+    } else if (statType === 'cleanSheets') {
+        statLabel = 'الشباك النظيفة';
+        statIcon = '🧤';
+    }
+    
+    // Build popup HTML
+    const popupHtml = `
+        <div class="player-popup-overlay" onclick="closePlayerPopup(event)">
+            <div class="player-popup" onclick="event.stopPropagation()">
+                <div class="player-popup-header">
+                    <h3>${playerName}</h3>
+                    <p class="player-popup-team">${teamName}</p>
+                    <button class="player-popup-close" onclick="closePlayerPopup()">&times;</button>
+                </div>
+                <div class="player-popup-stats">
+                    <div class="player-stat-total">
+                        <span class="stat-icon">${statIcon}</span>
+                        <span class="stat-number">${total}</span>
+                        <span class="stat-label">${statLabel}</span>
+                    </div>
+                </div>
+                <div class="player-popup-matches">
+                    <h4>المباريات (${playerMatches.length})</h4>
+                    ${playerMatches.length === 0 ? '<p class="no-data">لا توجد بيانات</p>' : ''}
+                    ${playerMatches.map(m => `
+                        <div class="player-match-item" onclick="showMatchFromPopup('${m.matchId}')">
+                            <div class="match-date">${formatDateArabic(m.date)}</div>
+                            <div class="match-opponent">
+                                ${m.opponentLogo ? `<img src="${m.opponentLogo}" class="opponent-logo" alt="">` : ''}
+                                <span>ضد ${m.opponent}</span>
+                            </div>
+                            <div class="match-result">
+                                <span class="match-score">${m.score}</span>
+                                <span class="match-stat-count">${statIcon} ${m.count}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add popup to body
+    const popupContainer = document.createElement('div');
+    popupContainer.id = 'player-popup-container';
+    popupContainer.innerHTML = popupHtml;
+    document.body.appendChild(popupContainer);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+}
+
+function closePlayerPopup(event) {
+    if (event && event.target !== event.currentTarget) return;
+    
+    const container = document.getElementById('player-popup-container');
+    if (container) {
+        container.remove();
+        document.body.style.overflow = '';
+    }
+}
+
+function showMatchFromPopup(matchId) {
+    // Close popup first
+    closePlayerPopup();
+    
+    // Find the match and show details
+    const match = allMatches.find(m => m.match_id === matchId);
+    if (match) {
+        showMatchDetails(match);
+    }
+}
+
+function formatDateArabic(dateStr) {
+    try {
+        const date = new Date(dateStr);
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        return date.toLocaleDateString('ar-EG', options);
+    } catch (e) {
+        return dateStr;
+    }
 }
 
 // ==================== TEAMS ====================
