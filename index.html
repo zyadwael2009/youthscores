@@ -4,100 +4,142 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="منصة Youth Scores لمتابعة بطولات كرة القدم للناشئين في مصر. نتائج المباريات الفورية، جداول الترتيب، إحصائيات شاملة، ومواعيد المباريات لجميع الأندية والبطولات">
-    <meta name="keywords" content="كرة قدم ناشئين, نتائج مباريات ناشئين, دوري الجمهورية, دوري منطقة القاهرة, كأس مصر للناشئين, الأهلي ناشئين, الزمالك ناشئين, الإسماعيلي, المصري, بيراميدز, إنبي, سيراميكا, الجونة, الاتحاد السكندري, سموحة, فريق مصر للمقاولون, المقاولون العرب, الجيش, الإنتاج الحربي, طلائع الجيش, نادي مصر, وادي دجلة, النصر للتعدين, بتروجيت, المصري البورسعيدي, غزل المحلة, زد, ملعب مختار التتش, ملعب الأهلي, ملعب الزمالك, ملعب الشمس, ملعب السلام, ملعب الإسماعيلية, ملعب بتروسبورت, ملعب الجزيرة, مواليد 2013, 2012, 2011, 2010, 2009, 2008, 2007">
-    <title>Youth Scores -  بطولات الناشئين</title>
+    <meta name="keywords" content="كرة قدم ناشئين, نتائج مباريات ناشئين, دوري الجمهورية, دوري منطقة القاهرة, كأس مصر للناشئين">
+    <title>Youth Scores - بطولات الناشئين</title>
     <link rel="icon" href="icon.png" type="image/x-icon">
     <link rel="preconnect" href="https://pagead2.googlesyndication.com">
     <link rel="stylesheet" href="styles.css">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3270638067426236"
-     crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3270638067426236" crossorigin="anonymous"></script>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1><img src="icon.png" alt="Youth Scores" class="header-logo" width="60" height="60"> Youth Scores</h1>
-            <p class="subtitle">بطولات الناشئين</p>
+
+    <header class="app-header">
+        <div class="header-inner">
+            <a href="index.html" class="header-brand">
+                <img src="icon.png" alt="Youth Scores" class="header-logo">
+                <div class="header-text">
+                    <span class="brand-name">Youth Scores</span>
+                    <span class="brand-tag">بطولات الناشئين</span>
+                </div>
+            </a>
+            <div class="header-live-badge">
+                <span class="live-dot"></span>
+                مباشر
+            </div>
         </div>
     </header>
 
-    <nav>
-        <div class="container">
-            <a href="index.html" class="nav-btn active">
-                <span class="icon">🏠</span>
-                الرئيسية
-            </a>
-            <a href="competitions.html" class="nav-btn">
-                <span class="icon">🏆</span>
-                البطولات
-            </a>
-            <a href="news.html" class="nav-btn">
-                <span class="icon">📰</span>
-                الأخبار
-            </a>
-            <a href="venues.html" class="nav-btn">
-                <span class="icon">📍</span>
-                الملاعب
-            </a>
-            <a href="contact.html" class="nav-btn">
-                <span class="icon">📞</span>
-                اتصل بنا
-            </a>
-        </div>
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">الرئيسية</span>
+        </a>
+        <a href="competitions.html" class="nav-item">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-label">البطولات</span>
+        </a>
+        <a href="news.html" class="nav-item">
+            <span class="nav-icon">📰</span>
+            <span class="nav-label">الأخبار</span>
+        </a>
+        <a href="venues.html" class="nav-item">
+            <span class="nav-icon">📍</span>
+            <span class="nav-label">الملاعب</span>
+        </a>
+        <a href="contact.html" class="nav-item">
+            <span class="nav-icon">📞</span>
+            <span class="nav-label">تواصل</span>
+        </a>
     </nav>
 
-    <main class="container">
-        <!-- Home Page -->
-        <div id="home-page" class="page active">
-            <section class="intro-section">
-                <div class="intro-content">
-                    <h2>مرحباً بك في Youth Scores</h2>
-                    <p>منصتك الأولى لمتابعة بطولات كرة القدم للناشئين في مصر. نوفر لك نتائج المباريات الفورية، جداول الترتيب، إحصائيات شاملة، ومعلومات عن جميع البطولات والأندية المشاركة.</p>
-                    <p>تابع فريقك المفضل، اعرف مواعيد المباريات، واطلع على أحدث الأخبار الرياضية للناشئين. نحن نغطي جميع المراحل السنية والبطولات المحلية في أنحاء الجمهورية.</p>
+    <main class="app-main container">
+
+        <!-- Hero Section -->
+        <section class="hero reveal">
+            <div class="hero-bg">
+                <div class="hero-orb orb-1"></div>
+                <div class="hero-orb orb-2"></div>
+                <div class="hero-orb orb-3"></div>
+            </div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    مصر · بطولات الناشئين
                 </div>
-            </section>
-            
-            <section class="today-matches">
-                <h2>مباريات اليوم</h2>
+                <p class="hero-subtitle">
+                    تابع جميع مباريات الناشئين في مصر — جداول حية، ترتيب، إحصائيات، وأخبار يومية.
+                </p>
+                <div class="hero-actions">
+                    <a href="competitions.html" class="hero-btn primary">🏆 استعرض البطولات</a>
+                    <a href="news.html" class="hero-btn secondary">📰 آخر الأخبار</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Home Page Content -->
+        <div id="home-page" class="page active">
+
+            <!-- Today Matches -->
+            <div class="page-section reveal">
+                <div class="section-title">
+                    <span class="section-title-icon">⚽</span>
+                    <span class="section-title-text">مباريات اليوم</span>
+                    <div class="section-title-line"></div>
+                </div>
                 <div id="today-matches-container" class="loading">
                     <div class="loader"></div>
                     <p>جاري تحميل المباريات...</p>
                 </div>
+            </div>
 
-            </section>
+            <div class="glow-divider"></div>
 
-            <section class="latest-news">
+            <!-- Latest News -->
+            <div class="page-section reveal">
                 <div class="section-header">
-                    <h3>آخر الأخبار</h3>
+                    <div class="section-title" style="margin-bottom:0; flex:1;">
+                        <span class="section-title-icon">📰</span>
+                        <span class="section-title-text">آخر الأخبار</span>
+                        <div class="section-title-line"></div>
+                    </div>
                     <a href="news.html" class="see-more-btn">المزيد</a>
                 </div>
-                <div id="home-news-container" class="news-grid">
+                <div id="home-news-container" class="news-grid stagger-children" style="margin-top:16px;">
                     <div class="loading">
                         <div class="loader"></div>
                         <p>جاري تحميل الأخبار...</p>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <section class="quick-links">
-                <h3>روابط سريعة</h3>
-                <div class="quick-links-grid">
-                    <a href="competitions.html" class="quick-link-card">
+            <div class="glow-divider"></div>
+
+            <!-- Quick Links -->
+            <div class="page-section reveal">
+                <div class="section-title">
+                    <span class="section-title-icon">⚡</span>
+                    <span class="section-title-text">روابط سريعة</span>
+                    <div class="section-title-line"></div>
+                </div>
+                <div class="quick-links-grid stagger-children" style="margin-top:16px;">
+                    <a href="competitions.html" class="quick-link-card reveal-scale">
                         <span class="icon">🏆</span>
                         <h4>جميع البطولات</h4>
                         <p>تصفح جميع بطولات الموسم</p>
                     </a>
-                    <a href="news.html" class="quick-link-card">
+                    <a href="news.html" class="quick-link-card reveal-scale">
                         <span class="icon">📰</span>
                         <h4>آخر الأخبار</h4>
                         <p>تابع أحدث الأخبار</p>
                     </a>
-                    <a href="venues.html" class="quick-link-card">
+                    <a href="venues.html" class="quick-link-card reveal-scale">
                         <span class="icon">📍</span>
                         <h4>مواقع الملاعب</h4>
                         <p>اعرف مكان أي ملعب</p>
                     </a>
                 </div>
-            </section>
+            </div>
+
         </div>
 
         <!-- Match Details Modal -->
@@ -111,21 +153,20 @@
 
     <footer>
         <div class="container">
-  
             <div class="footer-content">
                 <div class="footer-left">
                     <p class="small">هذا الموقع لمتابعة نتائج مسابقات الناشئين في مصر</p>
-                    <p class="small">هذه البيانات ليست بيانات رسمية و لكن تم جمعها من خلال المتابعة الشخصية للمباريات او من رسائل اولياء امور و اللاعبين او من صفحات التواصل الاجتماعي للاندية</p>
+                    <p class="small">هذه البيانات ليست بيانات رسمية وتم جمعها من خلال المتابعة الشخصية للمباريات أو من رسائل أولياء الأمور واللاعبين أو من صفحات التواصل الاجتماعي للأندية</p>
                 </div>
                 <div class="footer-right">
                     <a href="https://play.google.com/store/apps/details?id=com.waellotfy.youthscores&pcampaignid=web_share" target="_blank">
-                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" style="height: 60px;">
+                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" style="height:55px;">
                     </a>
                 </div>
             </div>
             <div class="footer-links">
-                <a href="about.html">من نحن</a> | 
-                <a href="privacy-policy.html">سياسة الخصوصية</a> | 
+                <a href="about.html">من نحن</a> |
+                <a href="privacy-policy.html">سياسة الخصوصية</a> |
                 <a href="terms.html">الشروط والأحكام</a>
             </div>
         </div>
